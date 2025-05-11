@@ -1,0 +1,13 @@
+# .gitignore
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.env
+*.DS_Store
+db.sqlite3
+venv/
+.env
+.migrations/
+*.egg-info/
+staticfiles/
