@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('created_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_receivings', to=settings.AUTH_USER_MODEL)),
                 ('modified_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='modified_receivings', to=settings.AUTH_USER_MODEL)),
-                ('service_type', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='receiving.servicetype')),
+                ('service_type', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='templates.servicetype')),
             ],
         ),
     ]
