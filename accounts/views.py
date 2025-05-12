@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
-from django.contrib import messages 
+from django.contrib import messages
+from django.urls import reverse
 
 def login_page(request):
     if request.user.is_authenticated:
-        return redirect('home')  # Redirect to home if already logged in
+        return redirect('receiving:add_receivings')
 
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -14,7 +15,7 @@ def login_page(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
-            return redirect('home')  # Redirect to home after login
+            return redirect('receiving:add_receivings')
         else:
             # Attempt to auto-create superuser if user doesn't exist
             username = request.POST.get('username')
@@ -24,7 +25,7 @@ def login_page(request):
                 user = User.objects.create_superuser(username=username, email="", password=password)
                 login(request, user)
                 messages.success(request, f"Superuser '{username}' created and logged in.")
-                return redirect('home')  # Redirect to home after auto-creation
+                return redirect('receiving:add_receivings')
             else:
                 messages.error(request, "Invalid credentials. Try again.")
     else:
@@ -35,4 +36,4 @@ def login_page(request):
 def logout_page(request):
     logout(request)
     messages.success(request, "You have successfully logged out!")
-    return redirect('accounts:login')
+    return redirect('accounts:login')  # Redirect to login page after logout

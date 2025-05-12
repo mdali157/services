@@ -1,0 +1,67 @@
+{% extends 'base_template.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Add Receiving</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Service Type -->
+    <div class="mb-3">
+      <label for="id_service_type" class="form-label">Service Type</label>
+      {{ form.service_type }}
+    </div>
+
+    <!-- Customer Name -->
+    <div class="mb-3">
+      <label for="customer_name" class="form-label">Customer Name</label>
+      <input type="text" name="customer_name" id="customer_name" class="form-control" required>
+    </div>
+
+    <!-- Customer Phone -->
+    <div class="mb-3">
+      <label for="customer_phone" class="form-label">Customer Phone</label>
+      <input type="text" name="customer_phone" id="customer_phone" class="form-control" required>
+    </div>
+
+    <!-- Description -->
+    <div class="mb-3">
+      <label for="id_description" class="form-label">Description</label>
+      {{ form.description }}
+    </div>
+
+    <!-- Remarks -->
+    <div class="mb-3">
+      <label for="id_remarks" class="form-label">Remarks</label>
+      {{ form.remarks }}
+    </div>
+
+    <!-- Estimated Price -->
+    <div class="mb-3">
+      <label for="id_estimated_price" class="form-label">Estimated Price</label>
+      {{ form.estimated_price }}
+    </div>
+
+    <!-- Actual Price -->
+    <div class="mb-3">
+      <label for="id_actual_price" class="form-label">Actual Price</label>
+      {{ form.actual_price }}
+    </div>
+
+    <!-- Receiving Image (Camera/File Upload) -->
+    <div class="mb-3">
+      <label for="id_receiving_image" class="form-label">Receiving Image</label>
+      {{ form.receiving_image }}
+    </div>
+
+    <!-- Delivery Image -->
+    <div class="mb-3">
+      <label for="id_delivery_image" class="form-label">Delivery Image</label>
+      {{ form.delivery_image }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Receiving</button>
+  </form>
+</div>
+
+{% endblock %}
