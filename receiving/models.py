@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-
 # Create your models here.
 
 class ServiceType(models.Model):
@@ -9,6 +8,8 @@ class ServiceType(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.name  # This will ensure the name of the service type is displayed (e.g., Soldering, Engraving)
 
 class Receiving(models.Model):
     service_type = models.ForeignKey(ServiceType, on_delete=models.SET_NULL, null=True)
