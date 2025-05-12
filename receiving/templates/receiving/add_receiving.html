@@ -13,9 +13,10 @@
     </div>
 
     <!-- Customer Name -->
-    <div class="mb-3">
+    <div class="mb-3 position-relative">
       <label for="customer_name" class="form-label">Customer Name</label>
-      <input type="text" name="customer_name" id="customer_name" class="form-control" required>
+      <input type="text" name="customer_name" id="customer_name" class="form-control" autocomplete="off" required>
+      <ul id="customer_suggestions" class="list-group position-absolute z-3 w-100" style="top: 100%; display: none;"></ul>
     </div>
 
     <!-- Customer Phone -->
@@ -56,6 +57,72 @@
       priceDisplay.textContent = `$${price}`;
     });
   });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const nameInput = document.getElementById("customer_name");
+    const phoneInput = document.getElementById("customer_phone");
+    const suggestionsBox = document.getElementById("customer_suggestions");
+
+    nameInput.addEventListener("input", function () {
+      const query = this.value.trim();
+      if (query.length < 2) {
+        suggestionsBox.style.display = "none";
+        return;
+      }
+
+      fetch(`/customer-autocomplete/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          suggestionsBox.innerHTML = "";
+          if (data.length === 0) {
+            suggestionsBox.style.display = "none";
+            return;
+          }
+          data.forEach(customer => {
+            const li = document.createElement("li");
+            li.className = "list-group-item list-group-item-action";
+            li.textContent = `${customer.name} (${customer.phone})`;
+            li.onclick = () => {
+              nameInput.value = customer.name;
+              phoneInput.value = customer.phone;
+              suggestionsBox.style.display = "none";
+            };
+            suggestionsBox.appendChild(li);
+          });
+          suggestionsBox.style.display = "block";
+        });
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!suggestionsBox.contains(e.target) && e.target !== nameInput) {
+        suggestionsBox.style.display = "none";
+      }
+    });
+  });
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+fetch(`/customer-autocomplete/?q=${encodeURIComponent(query)}`, {
+  method: 'GET',
+  headers: {
+    'X-CSRFToken': csrftoken,
+  },
+})
+
 </script>
 
 
