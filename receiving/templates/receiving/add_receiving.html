@@ -36,32 +36,27 @@
       {{ form.remarks }}
     </div>
 
-    <!-- Estimated Price -->
-    <div class="mb-3">
-      <label for="id_estimated_price" class="form-label">Estimated Price</label>
-      {{ form.estimated_price }}
-    </div>
-
-    <!-- Actual Price -->
-    <div class="mb-3">
-      <label for="id_actual_price" class="form-label">Actual Price</label>
-      {{ form.actual_price }}
-    </div>
-
-    <!-- Receiving Image (Camera/File Upload) -->
-    <div class="mb-3">
-      <label for="id_receiving_image" class="form-label">Receiving Image</label>
-      {{ form.receiving_image }}
-    </div>
-
-    <!-- Delivery Image -->
-    <div class="mb-3">
-      <label for="id_delivery_image" class="form-label">Delivery Image</label>
-      {{ form.delivery_image }}
+    <!-- Estimated Price Display Box -->
+    <div id="price-box" class="d-flex justify-content-between align-items-center p-3 rounded mb-3" style="background-color: rgba(40, 167, 69, 0.2); font-weight: bold;">
+      <span>Estimated Price:</span>
+      <span id="estimated-price">$0.00</span>
     </div>
 
     <button type="submit" class="btn btn-primary">Save Receiving</button>
   </form>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const descriptionInput = document.getElementById('id_description');
+    const priceDisplay = document.getElementById('estimated-price');
+
+    descriptionInput.addEventListener('input', function () {
+      const price = (descriptionInput.value.length * 0.5).toFixed(2);
+      priceDisplay.textContent = `$${price}`;
+    });
+  });
+</script>
+
 
 {% endblock %}
