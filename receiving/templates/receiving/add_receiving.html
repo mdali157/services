@@ -11,37 +11,52 @@
                     <h3>Receiving Details</h3>
                     <div class="card-box">
                         <div class="row">
-                            <div class="col-lg-6">
-                                <div>
-                                    <div class="form-group">
-                                        <label for="name">Full Name</label>
-                                        <input value="" type="text" name="customer_name" parsley-trigger="change"
-                                               required
-                                               placeholder="Full Name" class="form-control" id="name">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="contact">Contact</label>
-                                        <input value="" type="text" name="customer_contact" parsley-trigger="change"
-                                               required placeholder="Contact" class="form-control" id="contact">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="address">Address</label>
-                                        <input value="" type="text" name="customer_address"
-                                               required placeholder="Address" class="form-control" id="address">
-                                    </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="service_type">Service Type</label>
+                                    <select type="text" name="service_type"
+                                            required class="form-control" id="service_type">
+                                        {% for s in service_type %}
+                                            <option value="{{ s.name }}">{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg">
                                 <div class="form-group">
-                                    <label for="cnic">CNIC</label>
-                                    <input value="" id="cnic" name="customer_cnic" type="text"
-                                           placeholder="XXXXX-XXXXXX-X" required
-                                           class="form-control">
+                                    <label for="customer_name">Customer Name</label>
+                                    <input value="" type="text" name="customer_name" maxlength="50"
+                                           required placeholder="Customer Name" class="form-control" id="customer_name">
                                 </div>
+                            </div>
+                            <div class="col-lg">
                                 <div class="form-group">
-                                    <label for="emergency">Emergency Contact</label>
-                                    <input value="" id="emergency" name="customer_emergency_contact" type="text"
-                                           placeholder="Emergency Contact" required class="form-control">
+                                    <label for="customer_phone">Customer Phone</label>
+                                    <input value="" type="text" name="customer_phone" required pattern="03[0-9]{2}-[0-9]{7}"
+                                           placeholder="Customer Phone" class="form-control" id="customer_phone">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="remarks">Remarks</label>
+                                    <input value="" type="text" name="remarks" maxlength="50"
+                                            placeholder="Remarks" class="form-control" id="remarks">
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <input value="" type="text" name="description" maxlength="200"
+                                           placeholder="Description" class="form-control" id="description">
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="estimated_price">Estimated Price</label>
+                                    <input value="" type="number" name="estimated_price" required
+                                           placeholder="Estimated Price" class="form-control" id="estimated_price">
                                 </div>
                             </div>
                         </div>
@@ -50,84 +65,6 @@
             </div>
         </div>
     </form>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const descriptionInput = document.getElementById('id_description');
-    const priceDisplay = document.getElementById('estimated-price');
-
-    descriptionInput.addEventListener('input', function () {
-      const price = (descriptionInput.value.length * 0.5).toFixed(2);
-      priceDisplay.textContent = `$${price}`;
-    });
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const nameInput = document.getElementById("customer_name");
-    const phoneInput = document.getElementById("customer_phone");
-    const suggestionsBox = document.getElementById("customer_suggestions");
-
-    nameInput.addEventListener("input", function () {
-      const query = this.value.trim();
-      if (query.length < 2) {
-        suggestionsBox.style.display = "none";
-        return;
-      }
-
-      fetch(`/customer-autocomplete/?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          suggestionsBox.innerHTML = "";
-          if (data.length === 0) {
-            suggestionsBox.style.display = "none";
-            return;
-          }
-          data.forEach(customer => {
-            const li = document.createElement("li");
-            li.className = "list-group-item list-group-item-action";
-            li.textContent = `${customer.name} (${customer.phone})`;
-            li.onclick = () => {
-              nameInput.value = customer.name;
-              phoneInput.value = customer.phone;
-              suggestionsBox.style.display = "none";
-            };
-            suggestionsBox.appendChild(li);
-          });
-          suggestionsBox.style.display = "block";
-        });
-    });
-
-    document.addEventListener("click", function (e) {
-      if (!suggestionsBox.contains(e.target) && e.target !== nameInput) {
-        suggestionsBox.style.display = "none";
-      }
-    });
-  });
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-const csrftoken = getCookie('csrftoken');
-
-fetch(`/customer-autocomplete/?q=${encodeURIComponent(query)}`, {
-  method: 'GET',
-  headers: {
-    'X-CSRFToken': csrftoken,
-  },
-})
-
-</script>
 
 
 {% endblock %}

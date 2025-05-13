@@ -50,17 +50,10 @@
                         <h6 class="text-overflow text-white m-0">Welcome !</h6>
                     </div>
 
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <i class="mdi mdi-account-outline"></i>
-                        <span>Profile</span>
-                    </a>
-
-
                     <div class="dropdown-divider"></div>
 
                     <!-- item-->
-                    <a href="#" class="dropdown-item notify-item">
+                    <a href="{% url "accounts:logout" %}" class="dropdown-item notify-item">
                         <i class="mdi mdi-logout-variant"></i>
                         <span>Logout</span>
                     </a>
@@ -118,18 +111,7 @@
             <div id="sidebar-menu">
 
                 <ul class="metismenu" id="side-menu">
-
-                    <li>
-                        <a href="javascript: void(0);">
-                            <i class="typcn typcn-social-twitter"></i>
-                            <span> Birds </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="nav-second-level" aria-expanded="false">
-                            <li><a href="#">Birds Record</a></li>
-                        </ul>
-                    </li>
-
+                    <li><a href="{% url 'receiving:add_receiving' %}">Receiving </a></li>
                 </ul>
 
             </div>
