@@ -11,7 +11,7 @@ class ServiceType(models.Model):
 
 
 class Receiving(models.Model):
-    service_type = models.ForeignKey(ServiceType, on_delete=models.SET_NULL, null=True)
+    service_type = models.CharField(max_length=255)
     service_no = models.PositiveIntegerField(unique=True, blank=True, null=True)
     description = models.CharField(max_length=255)
     remarks = models.CharField(max_length=158)

@@ -1,7 +1,25 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+# from .forms import ReceivingForm
+from .models import  *
+from customers.models import  Customer
+from django.views.generic.edit import CreateView
+from django.http import JsonResponse
 
-
-# Create your views here.
+# @login_required
 def add_receivings(request):
-    context = {}
-    return render(request, 'eggs/eggs_record_details.html', context)
+    if request.method == 'POST':
+        # form = ReceivingForm(request.POST, request.FILES)
+        # if form.is_valid():
+        #     receiving = form.save(commit=False)
+        #     description = form.cleaned_data.get('description', '')
+        #     receiving.estimated_price = int(len(description) * 0.5)  # Convert to int if needed
+        #     receiving.created_by = request.user
+        #     receiving.modified_by = request.user
+        #     receiving.save()
+        #     print("Data Saved Successfully") # For Debugging
+            return redirect('home')
+        # form = ReceivingForm()
+    service_type = ServiceType.objects.all()
+    return render(request, 'receiving/add_receiving.html', {'service_type': service_type})
+
