@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-
+from customers.models import Customer
 
 # Create your models here.
 
@@ -19,6 +19,7 @@ class Receiving(models.Model):
     actual_price = models.IntegerField()
     receiving_image = models.ImageField()
     delivery_image = models.ImageField()
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_receivings')
@@ -29,3 +30,6 @@ class Receiving(models.Model):
             last = Receiving.objects.order_by('-service_no').first()
             self.service_no = 111111 if not last or not last.service_no else last.service_no + 1
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.service_no) + ' ' + self.customer.name + ' ' + self.description

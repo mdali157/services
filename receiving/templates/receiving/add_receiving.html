@@ -1,9 +1,13 @@
 {% extends 'base_template.html' %}
 {% load static %}
 
+{% block head %}
+    <link href="{% static 'css/receiving-styles.css' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>
+{% endblock %}
+
 {% block content %}
 
-    <form action="" method="post" enctype="multipart/form-data">
+    <form id="receiving-form" action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="container-fluid">
             <div class="row">
@@ -27,13 +31,14 @@
                                     <label for="customer_name">Customer Name</label>
                                     <input value="" type="text" name="customer_name" maxlength="50"
                                            required placeholder="Customer Name" class="form-control" id="customer_name">
-                                    <ul id="customer-suggestions" style="display: none; list-style: none; padding: 0; margin: 0;"></ul>
+                                    <ul id="customer-suggestions"></ul>
                                 </div>
                             </div>
                             <div class="col-lg">
                                 <div class="form-group">
                                     <label for="customer_phone">Customer Phone</label>
-                                    <input value="" type="text" name="customer_phone" required pattern="03[0-9]{2}-[0-9]{7}"
+                                    <input value="" type="text" name="customer_phone" required
+                                           pattern="03[0-9]{9}"
                                            placeholder="Customer Phone" class="form-control" id="customer_phone">
                                 </div>
                             </div>
@@ -43,7 +48,7 @@
                                 <div class="form-group">
                                     <label for="remarks">Remarks</label>
                                     <input value="" type="text" name="remarks" maxlength="50"
-                                            placeholder="Remarks" class="form-control" id="remarks">
+                                           placeholder="Remarks" class="form-control" id="remarks">
                                 </div>
                             </div>
                             <div class="col-lg">
@@ -61,9 +66,38 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group d-flex align-items-center">
+                                    <div>
+                                        <label for="capture">Receiving Image</label><br>
+                                        <button type="button" class="btn btn-primary btn-sm mb-2" id="captureBtn"
+                                                onclick="handleCapture()"><i class="fa fa-camera" aria-hidden="true"></i> &nbsp; Open Camera
+                                        </button>
+                                        <input type="hidden" name="captured_image" id="captured_image">
+                                        <video id="video" width="160" height="120" autoplay
+                                               style="display: none; border: 1px solid #ccc;"></video>
+                                        <canvas id="canvas" width="160" height="120" style="display: none;"></canvas>
+                                    </div>
+                                    <div id="image-preview" class="ml-3"
+                                         style="width: 160px; height: 120px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                        <span style="color: #999;">No Image</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <div class="row">
+
+                        <div class="col-lg text-right">
+                            <button type="submit" class="btn btn-success mt-3"><i class="fa fa-print" aria-hidden="true"></i>&nbsp; Save and Print</button>
+                        </div>
+                    </div>
+
+
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </form>
 
@@ -72,38 +106,127 @@
 
 {% block scripts %}
 
-<script>
-        document.getElementById('customer_name').addEventListener('input', function() {
-            let query = this.value;
-            if (query.length > 1) {  // Start searching after 3 characters
-                fetch(`/search-customers/?q=${query}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        let suggestions = data.suggestions;
-                        let suggestionList = document.getElementById('customer-suggestions');
-                        suggestionList.innerHTML = '';  // Clear previous suggestions
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const customerInput = document.getElementById('customer_name');
+            const suggestionList = document.getElementById('customer-suggestions');
 
-                        if (suggestions.length > 0) {
-                            suggestions.forEach(function(suggestion) {
-                                let listItem = document.createElement('li');
-                                listItem.textContent = `${suggestion.name} - ${suggestion.phone}`;  // Display name and phone
-                                listItem.style.cursor = 'pointer';
-                                listItem.addEventListener('click', function() {
-                                    // Populate the customer name and phone number fields
-                                    document.getElementById('customer_name').value = suggestion.name;
-                                    document.getElementById('customer_phone').value = suggestion.phone;
-                                    suggestionList.style.display = 'none';
+            customerInput.addEventListener('input', function () {
+                const query = this.value.trim();
+
+                if (query.length > 2) {
+                    fetch(`/customers/search-customers/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const suggestions = data.suggestions;
+                            suggestionList.innerHTML = '';
+
+                            if (suggestions.length > 0) {
+                                suggestions.forEach(suggestion => {
+                                    const listItem = document.createElement('li');
+                                    listItem.textContent = `${suggestion.name} - ${suggestion.phone}`;
+                                    listItem.style.cursor = 'pointer';
+
+                                    listItem.addEventListener('click', function () {
+                                        customerInput.value = suggestion.name;
+                                        document.getElementById('customer_phone').value = suggestion.phone;
+                                        suggestionList.style.display = 'none';
+                                    });
+
+                                    suggestionList.appendChild(listItem);
                                 });
-                                suggestionList.appendChild(listItem);
-                            });
-                            suggestionList.style.display = 'block';
-                        } else {
-                            suggestionList.style.display = 'none';
-                        }
+
+                                suggestionList.style.display = 'block';
+                            } else {
+                                suggestionList.style.display = 'none';
+                            }
+                        });
+                } else {
+                    suggestionList.style.display = 'none';
+                    suggestionList.innerHTML = '';
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!customerInput.contains(event.target) && !suggestionList.contains(event.target)) {
+                    suggestionList.style.display = 'none';
+                }
+            });
+        });
+
+
+    </script>
+
+    <script>
+        let videoStream = null;
+        let cameraActive = false;
+
+        function handleCapture() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('image-preview');
+            const captureBtn = document.getElementById('captureBtn');
+
+            if (!cameraActive) {
+                // Start the camera
+                navigator.mediaDevices.getUserMedia({video: true})
+                    .then(stream => {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        cameraActive = true;
+                        captureBtn.textContent = 'Capture Image';
+                    })
+                    .catch(err => {
+                        alert('Could not access the camera.');
+                        console.error(err);
                     });
             } else {
-                document.getElementById('customer-suggestions').style.display = 'none';
+                // Capture the image
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/png');
+                document.getElementById('captured_image').value = imageData;
+
+                // Show preview
+                preview.innerHTML = `<img src="${imageData}" style="width: 100%; height: 100%; object-fit: cover;">`;
+
+                // Stop video stream
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+                video.style.display = 'none';
+                cameraActive = false;
+                captureBtn.textContent = 'Open Camera';
             }
+        }
+    </script>
+
+    <script>
+    document.getElementById('receiving-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        fetch("", {
+            method: "POST",
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.print_url && data.redirect_url) {
+                window.open(data.print_url, '_blank');  // Open slip in new tab
+                window.location.href = data.redirect_url;  // Redirect current page
+            }
+        })
+        .catch(err => {
+            alert("Error submitting form.");
+            console.error(err);
         });
+    });
 </script>
+
+
+
 {% endblock %}
