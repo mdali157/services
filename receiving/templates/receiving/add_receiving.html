@@ -27,6 +27,7 @@
                                     <label for="customer_name">Customer Name</label>
                                     <input value="" type="text" name="customer_name" maxlength="50"
                                            required placeholder="Customer Name" class="form-control" id="customer_name">
+                                    <ul id="customer-suggestions" style="display: none; list-style: none; padding: 0; margin: 0;"></ul>
                                 </div>
                             </div>
                             <div class="col-lg">
@@ -67,4 +68,42 @@
     </form>
 
 
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+        document.getElementById('customer_name').addEventListener('input', function() {
+            let query = this.value;
+            if (query.length > 1) {  // Start searching after 3 characters
+                fetch(`/search-customers/?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let suggestions = data.suggestions;
+                        let suggestionList = document.getElementById('customer-suggestions');
+                        suggestionList.innerHTML = '';  // Clear previous suggestions
+
+                        if (suggestions.length > 0) {
+                            suggestions.forEach(function(suggestion) {
+                                let listItem = document.createElement('li');
+                                listItem.textContent = `${suggestion.name} - ${suggestion.phone}`;  // Display name and phone
+                                listItem.style.cursor = 'pointer';
+                                listItem.addEventListener('click', function() {
+                                    // Populate the customer name and phone number fields
+                                    document.getElementById('customer_name').value = suggestion.name;
+                                    document.getElementById('customer_phone').value = suggestion.phone;
+                                    suggestionList.style.display = 'none';
+                                });
+                                suggestionList.appendChild(listItem);
+                            });
+                            suggestionList.style.display = 'block';
+                        } else {
+                            suggestionList.style.display = 'none';
+                        }
+                    });
+            } else {
+                document.getElementById('customer-suggestions').style.display = 'none';
+            }
+        });
+</script>
 {% endblock %}
