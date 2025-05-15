@@ -9,21 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 
 from .models import *
-from customers.models import Customer
-
-
-# @login_required
-# def add_receivings(request):
-#     if request.method == 'POST':
-#         service_type = request.POST.get("service_type")
-#         customer_name = request.POST.get("customer_name")
-#         customer_phone = request.POST.get("customer_phone")
-#         remarks = request.POST.get("remarks")
-#         description = request.POST.get("description")
-#         estimated_price = request.POST.get("estimated_price")
-#         # form = ReceivingForm()
-#     service_type = ServiceType.objects.all()
-#     return render(request, 'receiving/add_receiving.html', {'service_type': service_type})
 
 
 @login_required
@@ -90,3 +75,49 @@ def add_receivings(request):
 def print_receiving_slip(request, receiving_id):
     receiving = get_object_or_404(Receiving, pk=receiving_id)
     return render(request, 'receiving/receiving_print_slip.html', {'receiving': receiving})
+
+
+def search_customers(request):
+    query = request.GET.get('q', '')  # Get search query from the request
+    customers = Customer.objects.filter(name__icontains=query)  # Filter customers by name
+    customer_suggestions = [
+        {'name': customer.name, 'phone': customer.phone_number}
+        for customer in customers
+    ]
+    return JsonResponse({'suggestions': customer_suggestions})
+
+
+def search_receiving(request):
+    query = request.GET.get('q', '')  # Get search query from the request
+    receivings = Receiving.objects.filter(service_no__contains=query)  # Filter customers by name
+    receiving_suggestions = [
+        {'service_no': receiving.service_no, 'customer': receiving.customer.name, 'phone': receiving.customer.phone_number}
+        for receiving in receivings
+    ]
+    return JsonResponse({'suggestions': receiving_suggestions})
+
+
+def receiving_delivery(request):
+    return render(request, 'receiving/delivery.html', )
+
+@login_required
+def get_receiving(request, service_no):
+    try:
+        receiving = Receiving.objects.select_related('customer').get(service_no=service_no)
+
+        data = {
+            'success': True,
+            'receiving': {
+                'service_type': receiving.service_type,
+                'remarks': receiving.remarks,
+                'description': receiving.description,
+                'estimated_price': receiving.estimated_price,
+                'customer_name': receiving.customer.name,
+                'customer_phone': receiving.customer.phone_number,
+                'is_delivered': receiving.is_delivered,
+                'receiving_image': receiving.receiving_image.url if receiving.receiving_image else None,
+            }
+        }
+    except Receiving.DoesNotExist:
+        data = {'success': False}
+    return JsonResponse(data)
