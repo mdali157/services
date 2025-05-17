@@ -115,7 +115,7 @@
                 const query = this.value.trim();
 
                 if (query.length > 2) {
-                    fetch(`search-customers/?q=${query}`)
+                    fetch(`/customers/search/?q=${query}`)
                         .then(response => response.json())
                         .then(data => {
                             const suggestions = data.suggestions;

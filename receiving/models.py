@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from customers.models import Customer
 # Create your models here.
 
 class ServiceType(models.Model):
@@ -11,22 +12,13 @@ class ServiceType(models.Model):
         return self.name
 
 
-class Customer(models.Model):
-    name = models.CharField(max_length=128)
-    phone_number = models.CharField(max_length=15)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-
-    def __str__(self):
-        return self.name + " - " + self.phone_number
-
 
 class Receiving(models.Model):
     service_type = models.CharField(max_length=255)
     service_no = models.PositiveIntegerField(unique=True, blank=True, null=True)
     description = models.CharField(max_length=255)
     remarks = models.CharField(max_length=158)
+    delivery_remarks = models.CharField(max_length=158)
     estimated_price = models.IntegerField()
     actual_price = models.IntegerField()
     receiving_image = models.ImageField()

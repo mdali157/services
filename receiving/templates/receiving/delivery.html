@@ -12,7 +12,7 @@
             <div class="col-lg-6">
                 <input type="text" id="search_service_no" class="form-control" placeholder="Enter Service No">
                 <ul id="service-suggestions"
-                    style="position: absolute; background: white; z-index: 10; width: 90%; border: 1px solid #ccc;"></ul>
+                    style="position: absolute; background: white; z-index: 10; width: 90%; "></ul>
             </div>
             <div class="col-lg-2">
                 <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
@@ -91,37 +91,73 @@
                                     <div class="form-group">
                                         <label for="actual_price">Actual Price</label>
                                         <input type="number" name="actual_price" id="actual_price" class="form-control">
+                                        <input type="text" name="service_no_hidden" id="service_no_hidden" style="display:none;">
                                     </div>
                                 </div>
                                 <div class="col-lg">
-                                    <div class="form-group">
-                                        <div class="form-check mt-4">
-                                            <input class="form-check-input custom-checkbox " type="checkbox" name="is_delivered"
-                                                   id="is_delivered">
-                                            <label class="form-check-label" for="is_delivered">
-                                                Delivered
-                                            </label>
-                                        </div>
+                                    <div class="form-group d-flex align-items-center" style="height: 100%;">
+                                        <label for="is_delivered" class="mb-0 mr-2" style="font-size: 1rem;">Is
+                                            Delivered</label>
+                                        <input type="checkbox" name="is_delivered" id="is_delivered"
+                                               class="custom-checkbox">
                                     </div>
                                 </div>
-
                             </div>
 
                             <div class="row">
+                                <!-- Receiving Image -->
                                 <div class="col-lg">
-                                    <div class="form-group ">
-                                        <label for="actual_price">Receiving image</label>
-                                        <div id="image-preview" class="ml-3"
-                                             style="width: 160px; height: 120px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                    <div class="form-group">
+                                        <label for="receiving-image">Receiving Image</label>
+                                        <div id="image-preview"
+                                             style="width: 70%; height: 70%; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
                                             <span style="color: #999;">No Image</span>
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Delivery Image -->
+                                <div class="col-lg">
+                                    <div class="form-group">
+                                        <label for="capture">Delivery Image</label>
+                                        <div class="d-flex align-items-start">
+                                            <!-- Preview Box -->
+                                            <div id="delivery-image-preview"
+                                                 style="width: 345px; height: 246px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                                <img id="delivery_image"
+                                                     src="{% static 'img.png' %}"
+                                                     alt="No Image"
+                                                     style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+
+
+                                            <!-- Button & hidden fields -->
+                                            <div class="ml-3">
+                                                <button type="button" class="btn btn-primary btn-sm mb-2"
+                                                        id="captureBtn"
+                                                        onclick="handleCapture()">Open Camera
+                                                </button>
+                                                <input type="hidden" name="captured_image" id="captured_image">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Empty Spacer Column -->
+                                <div class="col-lg">
+                                    <label for="capture" id="delivery_image_preview" style="display: none"> Delivery Image Preview</label>
+                                    <video id="video" width="160" height="120" autoplay
+                                           style="display: none; border: 1px solid #ccc;"></video>
+                                    <canvas id="canvas" width="160" height="120"
+                                            style="display: none;"></canvas>
+                                </div>
                             </div>
+
                             <div class="row">
 
                                 <div class="col-lg text-right">
-                                    <button type="submit" class="btn btn-success mt-3">
+                                    <button type="submit" class="btn btn-success mt-3" id="submitBtn">
                                         <i class="fa fa-print" aria-hidden="true"></i>&nbsp;
                                         Save and Print
                                     </button>
@@ -185,17 +221,35 @@
                     .then(data => {
                         if (data.success) {
                             document.getElementById('service_type').value = data.receiving.service_type;
+                            document.getElementById('service_no_hidden').value = data.receiving.service_no;
                             document.getElementById('customer_name').value = data.receiving.customer_name;
                             document.getElementById('customer_phone').value = data.receiving.customer_phone;
                             document.getElementById('remarks').value = data.receiving.remarks;
+                            if (data.receiving.delivery_remarks){
+                                document.getElementById('delivery_remarks').value = data.receiving.delivery_remarks;
+                                document.getElementById('delivery_remarks').disabled = 'true';
+                            }
+                            if (data.receiving.actual_price){
+                                document.getElementById('actual_price').value = data.receiving.actual_price;
+                                document.getElementById('actual_price').disabled = 'true';
+                            }
+                            if (data.receiving.is_delivered){
+                            document.getElementById('is_delivered').checked = data.receiving.is_delivered;
+                                document.getElementById('is_delivered').disabled = 'true';
+                            }
+
                             document.getElementById('description').value = data.receiving.description;
                             document.getElementById('estimated_price').value = data.receiving.estimated_price;
-                            document.getElementById('is_delivered').checked = data.receiving.is_delivered;
                             document.getElementById('delivery-container').style.display = 'block';
 
                             if (data.receiving.receiving_image) {
                                 const imgPreview = document.getElementById('image-preview');
                                 imgPreview.innerHTML = `<img src="${data.receiving.receiving_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
+                            }
+                            if (data.receiving.delivery_image) {
+                                const imgPreview = document.getElementById('delivery-image-preview');
+                                imgPreview.innerHTML = `<img src="${data.receiving.delivery_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
+                                document.getElementById('captureBtn').style.display = 'none';
                             }
                         } else {
                             alert('Receiving not found');
@@ -203,6 +257,82 @@
                     });
             }
         });
+    </script>
+
+    <script>
+        let videoStream = null;
+        let cameraActive = false;
+
+        function handleCapture() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('delivery-image-preview');
+            const captureBtn = document.getElementById('captureBtn');
+            const deliveryImgPreview = document.getElementById('delivery_image_preview');
+
+            if (!cameraActive) {
+                // Start the camera
+                navigator.mediaDevices.getUserMedia({video: true})
+                    .then(stream => {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        deliveryImgPreview.style.display = 'block';
+                        cameraActive = true;
+                        captureBtn.textContent = 'Capture Image';
+                    })
+                    .catch(err => {
+                        alert('Could not access the camera.');
+                        console.error(err);
+                    });
+            } else {
+                // Capture the image
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/png');
+                document.getElementById('captured_image').value = imageData;
+
+                // Show preview
+                preview.innerHTML = `<img src="${imageData}" style="width: 100%; height: 100%; object-fit: cover;">`;
+
+                // Stop video stream
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+                video.style.display = 'none';
+                deliveryImgPreview.style.display = 'none';
+
+                cameraActive = false;
+                captureBtn.textContent = 'Open Camera';
+            }
+        }
+    </script>
+
+    <script>
+    document.getElementById('delivery-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const serviceNo = document.getElementById('service_no_hidden').value;
+
+    fetch(`/receiving/update/${serviceNo}/`, {
+        method: "POST",
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.print_url && data.redirect_url) {
+            window.open(data.print_url, '_blank');
+            window.location.href = data.redirect_url;
+        }
+    })
+    .catch(err => {
+        alert("Error submitting form.");
+        console.error(err);
+    });
+});
+
     </script>
 
 {% endblock %}

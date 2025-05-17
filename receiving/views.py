@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-
+from customers.models import Customer
 from .models import *
 
 
@@ -72,19 +72,54 @@ def add_receivings(request):
     })
 
 
+@login_required
+def update_delivery_fields(request, service_no):
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        receiving = get_object_or_404(Receiving, service_no=service_no)
+
+        # Only update fields if not already set
+        if not receiving.delivery_remarks:
+            receiving.delivery_remarks = request.POST.get('delivery_remarks', '').strip()
+
+        if not receiving.actual_price:
+            actual_price = request.POST.get('actual_price')
+            receiving.actual_price = actual_price if actual_price else 0
+
+        if not receiving.is_delivered:
+            is_delivered = request.POST.get('is_delivered')
+            receiving.is_delivered = is_delivered == 'on'
+
+        captured_image_data = request.POST.get('captured_image')
+        if not receiving.delivery_image and captured_image_data and 'base64' in captured_image_data:
+            format, imgstr = captured_image_data.split(';base64,')
+            ext = format.split('/')[-1]
+            image_data = base64.b64decode(imgstr)
+            file_name = f"delivery_{uuid.uuid4().hex[:10]}.{ext}"
+
+            image_file = InMemoryUploadedFile(
+                BytesIO(image_data),
+                field_name="delivery_image",
+                name=file_name,
+                content_type=f"image/{ext}",
+                size=len(image_data),
+                charset=None
+            )
+            receiving.delivery_image = image_file
+
+        receiving.modified_by = request.user
+        receiving.save()
+
+        return JsonResponse({
+            'print_url': reverse('receiving:print_receiving_slip', args=[receiving.id]),
+            'redirect_url': reverse('receiving:add_receiving')
+        })
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
 def print_receiving_slip(request, receiving_id):
     receiving = get_object_or_404(Receiving, pk=receiving_id)
     return render(request, 'receiving/receiving_print_slip.html', {'receiving': receiving})
 
-
-def search_customers(request):
-    query = request.GET.get('q', '')  # Get search query from the request
-    customers = Customer.objects.filter(name__icontains=query)  # Filter customers by name
-    customer_suggestions = [
-        {'name': customer.name, 'phone': customer.phone_number}
-        for customer in customers
-    ]
-    return JsonResponse({'suggestions': customer_suggestions})
 
 
 def search_receiving(request):
@@ -109,13 +144,17 @@ def get_receiving(request, service_no):
             'success': True,
             'receiving': {
                 'service_type': receiving.service_type,
+                'service_no': receiving.service_no,
                 'remarks': receiving.remarks,
                 'description': receiving.description,
                 'estimated_price': receiving.estimated_price,
                 'customer_name': receiving.customer.name,
                 'customer_phone': receiving.customer.phone_number,
                 'is_delivered': receiving.is_delivered,
+                'delivery_remarks': receiving.delivery_remarks,
+                'actual_price': receiving.actual_price,
                 'receiving_image': receiving.receiving_image.url if receiving.receiving_image else None,
+                'delivery_image': receiving.delivery_image.url if receiving.delivery_image else None,
             }
         }
     except Receiving.DoesNotExist:
