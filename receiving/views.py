@@ -109,10 +109,16 @@ def update_delivery_fields(request, service_no):
         receiving.modified_by = request.user
         receiving.save()
 
-        return JsonResponse({
-            'print_url': reverse('receiving:print_receiving_slip', args=[receiving.id]),
-            'redirect_url': reverse('receiving:add_receiving')
-        })
+        should_redirect = request.POST.get("should_redirect") == "1"
+
+        response_data = {
+            'print_url': reverse('receiving:print_receiving_slip', args=[receiving.id])
+        }
+
+        if should_redirect:
+            response_data['redirect_url'] = reverse('receiving:add_receiving')
+
+        return JsonResponse(response_data)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

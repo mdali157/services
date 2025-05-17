@@ -237,6 +237,9 @@
                             document.getElementById('is_delivered').checked = data.receiving.is_delivered;
                                 document.getElementById('is_delivered').disabled = 'true';
                             }
+                            if (data.receiving.delivery_remarks && data.receiving.actual_price && data.receiving.is_delivered && data.receiving.delivery_image){
+                                document.getElementById('submitBtn').innerHTML = '<i class="fa fa-print" aria-hidden="true"></i>&nbsp; Print';
+                            }
 
                             document.getElementById('description').value = data.receiving.description;
                             document.getElementById('estimated_price').value = data.receiving.estimated_price;
@@ -313,6 +316,10 @@
     const formData = new FormData(form);
     const serviceNo = document.getElementById('service_no_hidden').value;
 
+    // Check button text to decide redirect behavior
+    const shouldRedirect = document.getElementById('submitBtn').textContent.trim() !== 'Print';
+    formData.append('should_redirect', shouldRedirect ? '1' : '0');
+
     fetch(`/receiving/update/${serviceNo}/`, {
         method: "POST",
         body: formData,
@@ -322,8 +329,10 @@
     })
     .then(response => response.json())
     .then(data => {
-        if (data.print_url && data.redirect_url) {
+        if (data.print_url) {
             window.open(data.print_url, '_blank');
+        }
+        if (data.redirect_url) {
             window.location.href = data.redirect_url;
         }
     })
@@ -332,6 +341,7 @@
         console.error(err);
     });
 });
+
 
     </script>
 

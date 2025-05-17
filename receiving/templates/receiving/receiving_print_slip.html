@@ -39,9 +39,12 @@
         <hr>
         <p><span class="field-label">Serial No:</span> {{ receiving.service_no }}</p>
         <p><span class="field-label">Customer Name:</span> {{ receiving.customer.name }}</p>
-        <p><span class="field-label">Phone:</span> {{ receiving.customer.phone }}</p>
+        <p><span class="field-label">Phone:</span> {{ receiving.customer.phone_number }}</p>
         <p><span class="field-label">Description:</span> {{ receiving.description }}</p>
+        <p><span class="field-label">Remarks:</span> {{ receiving.remarks }}</p>
+        <p><span class="field-label">Delivery Remarks:</span> {{ receiving.delivery_remarks }}</p>
         <p><span class="field-label">Estimated Price:</span> Rs. {{ receiving.estimated_price }}</p>
+        <p><span class="field-label">Actual Price:</span> Rs. {{ receiving.actual_price }}</p>
         <div class="barcode">
             <svg id="barcode"></svg>
         </div>
