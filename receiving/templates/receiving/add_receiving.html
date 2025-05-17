@@ -68,30 +68,51 @@
                         </div>
                         <div class="row">
                             <div class="col-lg">
-                                <div class="form-group d-flex align-items-center">
-                                    <div>
-                                        <label for="capture">Receiving Image</label><br>
-                                        <button type="button" class="btn btn-primary btn-sm mb-2" id="captureBtn"
-                                                onclick="handleCapture()"><i class="fa fa-camera" aria-hidden="true"></i> &nbsp; Open Camera
-                                        </button>
-                                        <input type="hidden" name="captured_image" id="captured_image">
-                                        <video id="video" width="160" height="120" autoplay
-                                               style="display: none; border: 1px solid #ccc;"></video>
-                                        <canvas id="canvas" width="160" height="120" style="display: none;"></canvas>
-                                    </div>
-                                    <div id="image-preview" class="ml-3"
-                                         style="width: 160px; height: 120px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
-                                        <span style="color: #999;">No Image</span>
+                                <div class="form-group">
+                                    <label for="capture">Receiving Image</label>
+                                    <div class="d-flex align-items-start">
+                                        <!-- Preview Box -->
+                                        <div id="image-preview"
+                                             style="width: 345px; height: 246px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                            <img id="receiving_image"
+                                                 src="{% static 'img.png' %}"
+                                                 alt="No Image"
+                                                 style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+
+                                        <!-- Button & hidden fields -->
+                                        <div class="ml-3">
+                                            <button type="button" class="btn btn-primary btn-sm mb-2" id="captureBtn"
+                                                    onclick="handleCapture()">&nbsp; Open Camera
+                                            </button>
+                                            <input type="hidden" name="captured_image" id="captured_image">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    <div class="row">
 
-                        <div class="col-lg text-right">
-                            <button type="submit" class="btn btn-success mt-3"><i class="fa fa-print" aria-hidden="true"></i>&nbsp; Save and Print</button>
+                            <!-- Spacer + Hidden Video/Canvas Elements -->
+                            <div class="col-lg">
+                                <label for="capture" id="receiving_image_preview" style="display: none">Receiving Image
+                                    Preview</label>
+                                <video id="video" width="160" height="120" autoplay
+                                       style="display: none; border: 1px solid #ccc;"></video>
+                                <canvas id="canvas" width="160" height="120" style="display: none;"></canvas>
+                            </div>
+                            <div class="col-lg">
+                                <span></span>
+                            </div>
+
                         </div>
-                    </div>
+                        <div class="row">
+
+                            <div class="col-lg text-right">
+                                <button type="submit" class="btn btn-success mt-3"><i class="fa fa-print"
+                                                                                      aria-hidden="true"></i>&nbsp; Save
+                                    and Print
+                                </button>
+                            </div>
+                        </div>
 
 
                     </div>
@@ -164,8 +185,9 @@
         function handleCapture() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            const preview = document.getElementById('image-preview');
+            const receivingImage = document.getElementById('receiving_image');
             const captureBtn = document.getElementById('captureBtn');
+            const previewLabel = document.getElementById('receiving_image_preview');
 
             if (!cameraActive) {
                 // Start the camera
@@ -174,6 +196,7 @@
                         videoStream = stream;
                         video.srcObject = stream;
                         video.style.display = 'block';
+                        previewLabel.style.display = 'block';
                         cameraActive = true;
                         captureBtn.textContent = 'Capture Image';
                     })
@@ -187,45 +210,47 @@
                 const imageData = canvas.toDataURL('image/png');
                 document.getElementById('captured_image').value = imageData;
 
-                // Show preview
-                preview.innerHTML = `<img src="${imageData}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                // Show image preview
+                receivingImage.src = imageData;
 
-                // Stop video stream
+                // Stop the video stream
                 videoStream.getTracks().forEach(track => track.stop());
                 videoStream = null;
                 video.style.display = 'none';
+                previewLabel.style.display = 'none';
                 cameraActive = false;
                 captureBtn.textContent = 'Open Camera';
             }
         }
+
     </script>
 
     <script>
-    document.getElementById('receiving-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
+        document.getElementById('receiving-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
 
-        fetch("", {
-            method: "POST",
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.print_url && data.redirect_url) {
-                window.open(data.print_url, '_blank');  // Open slip in new tab
-                window.location.href = data.redirect_url;  // Redirect current page
-            }
-        })
-        .catch(err => {
-            alert("Error submitting form.");
-            console.error(err);
+            fetch("", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.print_url && data.redirect_url) {
+                        window.open(data.print_url, '_blank');  // Open slip in new tab
+                        window.location.href = data.redirect_url;  // Redirect current page
+                    }
+                })
+                .catch(err => {
+                    alert("Error submitting form.");
+                    console.error(err);
+                });
         });
-    });
-</script>
+    </script>
 
 
 
