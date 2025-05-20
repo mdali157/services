@@ -10,5 +10,6 @@ urlpatterns = [
     path('search-receiving/', views.search_receiving, name="search_receiving"),
     path('get/<int:service_no>/', views.get_receiving, name='get_receiving'),
     path('update/<str:service_no>/', views.update_delivery_fields, name='update_delivery'),
+    path('all/', views.get_all_receiving, name='all_receivings')
 
 ]

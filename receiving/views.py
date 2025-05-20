@@ -166,3 +166,7 @@ def get_receiving(request, service_no):
     except Receiving.DoesNotExist:
         data = {'success': False}
     return JsonResponse(data)
+
+def get_all_receiving(request):
+    receivings = Receiving.objects.all()
+    return render(request, 'receiving/all_receiving.html', {'receivigs': receivings})
