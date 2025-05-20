@@ -3,6 +3,7 @@ import uuid
 from io import BytesIO
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db.models import Max
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -67,13 +68,15 @@ def add_receivings(request):
         })
 
     service_type = ServiceType.objects.all()
+    max_service_no = Receiving.objects.aggregate(Max('service_no'))['service_no__max']
+    next_service_no = 111111 if max_service_no is None else max_service_no + 1
     return render(request, 'receiving/add_receiving.html', {
-        'service_type': service_type
+        'service_type': service_type, 'next_service_no': next_service_no
     })
 
 
 @login_required
-def update_delivery_fields(request, service_no):
+def get_receiving_and_update_delivery_fields(request, service_no):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         receiving = get_object_or_404(Receiving, service_no=service_no)
 
@@ -120,7 +123,22 @@ def update_delivery_fields(request, service_no):
 
         return JsonResponse(response_data)
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    receiving = Receiving.objects.select_related('customer').get(service_no=service_no)
+    context = {
+        'service_type': receiving.service_type,
+        'service_no': receiving.service_no,
+        'remarks': receiving.remarks,
+        'description': receiving.description,
+        'estimated_price': receiving.estimated_price,
+        'customer_name': receiving.customer.name,
+        'customer_phone': receiving.customer.phone_number,
+        'is_delivered': receiving.is_delivered,
+        'delivery_remarks': receiving.delivery_remarks,
+        'actual_price': receiving.actual_price,
+        'receiving_image': receiving.receiving_image.url if receiving.receiving_image else None,
+        'delivery_image': receiving.delivery_image.url if receiving.delivery_image else None,
+    }
+    return render(request,'receiving/delivery.html', context)
 
 def print_receiving_slip(request, receiving_id):
     receiving = get_object_or_404(Receiving, pk=receiving_id)
@@ -168,5 +186,5 @@ def get_receiving(request, service_no):
     return JsonResponse(data)
 
 def get_all_receiving(request):
-    receivings = Receiving.objects.all()
-    return render(request, 'receiving/all_receiving.html', {'receivigs': receivings})
+    all_receiving = Receiving.objects.all()
+    return render(request, 'receiving/all_receiving.html', {'all_receiving': all_receiving})

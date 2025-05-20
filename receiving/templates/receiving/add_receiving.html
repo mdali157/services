@@ -15,6 +15,15 @@
                     <h3>Receiving Details</h3>
                     <div class="card-box">
                         <div class="row">
+                            <div class="col-lg-4">
+                                <div class="form-group">
+                                    <label for="service_no">Service no</label>
+                                    <input type="text" name="service_no" disabled
+                                            class="form-control" id="service_no" value="{{ next_service_no }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
                             <div class="col-lg">
                                 <div class="form-group">
                                     <label for="service_type">Service Type</label>
@@ -37,8 +46,7 @@
                             <div class="col-lg">
                                 <div class="form-group">
                                     <label for="customer_phone">Customer Phone</label>
-                                    <input value="" type="text" name="customer_phone" required
-                                           pattern="03[0-9]{9}"
+                                    <input value="" type="text" name="customer_phone"
                                            placeholder="Customer Phone" class="form-control" id="customer_phone">
                                 </div>
                             </div>

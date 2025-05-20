@@ -7,20 +7,7 @@
 
 {% block content %}
 
-    <div class="container-fluid mb-3 pt-3">
-        <div class="row">
-            <div class="col-lg-6">
-                <input type="text" id="search_service_no" class="form-control" placeholder="Enter Service No">
-                <ul id="service-suggestions"
-                    style="position: absolute; background: white; z-index: 10; width: 90%; "></ul>
-            </div>
-            <div class="col-lg-2">
-                <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="delivery-container" style="display: none;">
+    <div id="delivery-container" >
 
         <form id="delivery-form" action="" method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -179,85 +166,43 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const input = document.getElementById('search_service_no');
-            const suggestionBox = document.getElementById('service-suggestions');
-            const searchBtn = document.getElementById('searchBtn');
-
-            input.addEventListener('input', function () {
-                const query = this.value;
-                if (query.length >= 2) {
-                    fetch(`/receiving/search-receiving/?q=${query}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            suggestionBox.innerHTML = '';
-                            data.suggestions.forEach(item => {
-                                const li = document.createElement('li');
-                                li.textContent = `#${item.service_no} - ${item.customer} - ${item.phone}`;
-                                li.style.cursor = 'pointer';
-                                li.classList.add('p-2', 'border-bottom');
-                                li.addEventListener('click', function () {
-                                    input.value = item.service_no;
-                                    suggestionBox.innerHTML = '';
-                                    fetchReceivingDetails(item.service_no);
-                                });
-                                suggestionBox.appendChild(li);
-                            });
-                        });
-                } else {
-                    suggestionBox.innerHTML = '';
+            if (data.success) {
+                document.getElementById('service_type').value = data.receiving.service_type;
+                document.getElementById('service_no_hidden').value = data.receiving.service_no;
+                document.getElementById('customer_name').value = data.receiving.customer_name;
+                document.getElementById('customer_phone').value = data.receiving.customer_phone;
+                document.getElementById('remarks').value = data.receiving.remarks;
+                if (data.receiving.delivery_remarks) {
+                    document.getElementById('delivery_remarks').value = data.receiving.delivery_remarks;
+                    document.getElementById('delivery_remarks').disabled = 'true';
                 }
-            });
-
-            searchBtn.addEventListener('click', function () {
-                const service_no = input.value.trim();
-                if (service_no) {
-                    fetchReceivingDetails(service_no);
+                if (data.receiving.actual_price) {
+                    document.getElementById('actual_price').value = data.receiving.actual_price;
+                    document.getElementById('actual_price').disabled = 'true';
                 }
-            });
+                if (data.receiving.is_delivered) {
+                    document.getElementById('is_delivered').checked = data.receiving.is_delivered;
+                    document.getElementById('is_delivered').disabled = 'true';
+                }
+                if (data.receiving.delivery_remarks && data.receiving.actual_price && data.receiving.is_delivered && data.receiving.delivery_image) {
+                    document.getElementById('submitBtn').innerHTML = '<i class="fa fa-print" aria-hidden="true"></i>&nbsp; Print';
+                }
 
-            function fetchReceivingDetails(service_no) {
-                fetch(`/receiving/get/${service_no}/`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('service_type').value = data.receiving.service_type;
-                            document.getElementById('service_no_hidden').value = data.receiving.service_no;
-                            document.getElementById('customer_name').value = data.receiving.customer_name;
-                            document.getElementById('customer_phone').value = data.receiving.customer_phone;
-                            document.getElementById('remarks').value = data.receiving.remarks;
-                            if (data.receiving.delivery_remarks){
-                                document.getElementById('delivery_remarks').value = data.receiving.delivery_remarks;
-                                document.getElementById('delivery_remarks').disabled = 'true';
-                            }
-                            if (data.receiving.actual_price){
-                                document.getElementById('actual_price').value = data.receiving.actual_price;
-                                document.getElementById('actual_price').disabled = 'true';
-                            }
-                            if (data.receiving.is_delivered){
-                            document.getElementById('is_delivered').checked = data.receiving.is_delivered;
-                                document.getElementById('is_delivered').disabled = 'true';
-                            }
-                            if (data.receiving.delivery_remarks && data.receiving.actual_price && data.receiving.is_delivered && data.receiving.delivery_image){
-                                document.getElementById('submitBtn').innerHTML = '<i class="fa fa-print" aria-hidden="true"></i>&nbsp; Print';
-                            }
+                document.getElementById('description').value = data.receiving.description;
+                document.getElementById('estimated_price').value = data.receiving.estimated_price;
+                document.getElementById('delivery-container').style.display = 'block';
 
-                            document.getElementById('description').value = data.receiving.description;
-                            document.getElementById('estimated_price').value = data.receiving.estimated_price;
-                            document.getElementById('delivery-container').style.display = 'block';
-
-                            if (data.receiving.receiving_image) {
-                                const imgPreview = document.getElementById('image-preview');
-                                imgPreview.innerHTML = `<img src="${data.receiving.receiving_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
-                            }
-                            if (data.receiving.delivery_image) {
-                                const imgPreview = document.getElementById('delivery-image-preview');
-                                imgPreview.innerHTML = `<img src="${data.receiving.delivery_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
-                                document.getElementById('captureBtn').style.display = 'none';
-                            }
-                        } else {
-                            alert('Receiving not found');
-                        }
-                    });
+                if (data.receiving.receiving_image) {
+                    const imgPreview = document.getElementById('image-preview');
+                    imgPreview.innerHTML = `<img src="${data.receiving.receiving_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
+                }
+                if (data.receiving.delivery_image) {
+                    const imgPreview = document.getElementById('delivery-image-preview');
+                    imgPreview.innerHTML = `<img src="${data.receiving.delivery_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
+                    document.getElementById('captureBtn').style.display = 'none';
+                }
+            } else {
+                alert('Receiving not found');
             }
         });
     </script>

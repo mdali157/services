@@ -1,3 +1,5 @@
+from unittest.mock import DEFAULT
+
 from django.contrib.auth.models import User
 from django.db import models
 from customers.models import Customer
@@ -14,15 +16,15 @@ class ServiceType(models.Model):
 
 
 class Receiving(models.Model):
-    service_type = models.CharField(max_length=255)
+    service_type = models.CharField(max_length=255,  blank=True, null=True)
     service_no = models.PositiveIntegerField(unique=True, blank=True, null=True)
     description = models.CharField(max_length=255)
-    remarks = models.CharField(max_length=158)
-    delivery_remarks = models.CharField(max_length=158)
-    estimated_price = models.IntegerField()
-    actual_price = models.IntegerField()
-    receiving_image = models.ImageField()
-    delivery_image = models.ImageField()
+    remarks = models.CharField(max_length=158 ,blank=True, null=True)
+    delivery_remarks = models.CharField(max_length=158 ,blank=True, null=True)
+    estimated_price = models.IntegerField(blank=True, null=True)
+    actual_price = models.IntegerField(blank=True, null=True)
+    receiving_image = models.ImageField(blank=True, null=True)
+    delivery_image = models.ImageField(blank=True, null=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     is_delivered = models.BooleanField(default=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -9,7 +9,7 @@ urlpatterns = [
     path('delivery/', views.receiving_delivery, name='receiving_delivery'),
     path('search-receiving/', views.search_receiving, name="search_receiving"),
     path('get/<int:service_no>/', views.get_receiving, name='get_receiving'),
-    path('update/<str:service_no>/', views.update_delivery_fields, name='update_delivery'),
+    path('<int:service_no>/', views.get_receiving_and_update_delivery_fields, name='get_receiving_and_update_delivery_fields'),
     path('all/', views.get_all_receiving, name='all_receivings')
 
 ]
