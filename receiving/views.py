@@ -140,50 +140,11 @@ def get_receiving_and_update_delivery_fields(request, service_no):
     }
     return render(request,'receiving/delivery.html', context)
 
+
 def print_receiving_slip(request, receiving_id):
     receiving = get_object_or_404(Receiving, pk=receiving_id)
     return render(request, 'receiving/receiving_print_slip.html', {'receiving': receiving})
 
-
-
-def search_receiving(request):
-    query = request.GET.get('q', '')  # Get search query from the request
-    receivings = Receiving.objects.filter(service_no__contains=query)  # Filter customers by name
-    receiving_suggestions = [
-        {'service_no': receiving.service_no, 'customer': receiving.customer.name, 'phone': receiving.customer.phone_number}
-        for receiving in receivings
-    ]
-    return JsonResponse({'suggestions': receiving_suggestions})
-
-
-def receiving_delivery(request):
-    return render(request, 'receiving/delivery.html', )
-
-@login_required
-def get_receiving(request, service_no):
-    try:
-        receiving = Receiving.objects.select_related('customer').get(service_no=service_no)
-
-        data = {
-            'success': True,
-            'receiving': {
-                'service_type': receiving.service_type,
-                'service_no': receiving.service_no,
-                'remarks': receiving.remarks,
-                'description': receiving.description,
-                'estimated_price': receiving.estimated_price,
-                'customer_name': receiving.customer.name,
-                'customer_phone': receiving.customer.phone_number,
-                'is_delivered': receiving.is_delivered,
-                'delivery_remarks': receiving.delivery_remarks,
-                'actual_price': receiving.actual_price,
-                'receiving_image': receiving.receiving_image.url if receiving.receiving_image else None,
-                'delivery_image': receiving.delivery_image.url if receiving.delivery_image else None,
-            }
-        }
-    except Receiving.DoesNotExist:
-        data = {'success': False}
-    return JsonResponse(data)
 
 def get_all_receiving(request):
     all_receiving = Receiving.objects.all()
