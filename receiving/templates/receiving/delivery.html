@@ -7,7 +7,7 @@
 
 {% block content %}
 
-    <div id="delivery-container" >
+    <div id="delivery-container">
 
         <form id="delivery-form" action="" method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -20,16 +20,17 @@
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="service_type">Service Type</label>
-                                        <input value="" type="text" name="service_type" maxlength="50"
-                                               required placeholder="Service Type" class="form-control" disabled
+                                        <input value="{{ service_type }}" type="text" name="service_type" maxlength="50"
+                                               placeholder="Service Type" class="form-control" disabled
                                                id="service_type">
                                     </div>
                                 </div>
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="customer_name">Customer Name</label>
-                                        <input value="" type="text" name="customer_name" maxlength="50" disabled
-                                               required placeholder="Customer Name" class="form-control"
+                                        <input value="{{ customer_name }}" type="text" name="customer_name"
+                                               maxlength="50" disabled
+                                               placeholder="Customer Name" class="form-control"
                                                id="customer_name">
                                         <ul id="customer-suggestions"></ul>
                                     </div>
@@ -37,8 +38,7 @@
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="customer_phone">Customer Phone</label>
-                                        <input value="" type="text" name="customer_phone" required disabled
-                                               pattern="03[0-9]{9}"
+                                        <input value="{{ customer_phone }}" type="text" name="customer_phone" disabled
                                                placeholder="Customer Phone" class="form-control" id="customer_phone">
                                     </div>
                                 </div>
@@ -47,21 +47,23 @@
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="remarks">Remarks</label>
-                                        <input value="" type="text" name="remarks" maxlength="50" disabled
+                                        <input value="{{ remarks }}" type="text" name="remarks" maxlength="50" disabled
                                                placeholder="Remarks" class="form-control" id="remarks">
                                     </div>
                                 </div>
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="description">Description</label>
-                                        <input value="" type="text" name="description" maxlength="200" disabled
+                                        <input value="{{ description }}" type="text" name="description" maxlength="200"
+                                               disabled
                                                placeholder="Description" class="form-control" id="description">
                                     </div>
                                 </div>
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="estimated_price">Estimated Price</label>
-                                        <input value="" type="number" name="estimated_price" required disabled
+                                        <input value="{{ estimated_price }}" type="number" name="estimated_price"
+                                               required disabled
                                                placeholder="Estimated Price" class="form-control" id="estimated_price">
                                     </div>
                                 </div>
@@ -70,23 +72,45 @@
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="delivery_remarks">Delivery Remarks</label>
-                                        <input type="text" name="delivery_remarks" id="delivery_remarks"
-                                               class="form-control">
+                                        {% if delivery_remarks %}
+                                            <input type="text" name="delivery_remarks" id="delivery_remarks"
+                                                   value="{{ delivery_remarks }}"
+                                                   class="form-control" disabled>
+                                        {% else %}
+                                            <input type="text" name="delivery_remarks" id="delivery_remarks"
+                                                   class="form-control">
+
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-lg">
                                     <div class="form-group">
                                         <label for="actual_price">Actual Price</label>
-                                        <input type="number" name="actual_price" id="actual_price" class="form-control">
-                                        <input type="text" name="service_no_hidden" id="service_no_hidden" style="display:none;">
+                                        {% if actual_price %}
+                                            <input type="number" name="actual_price" id="actual_price"
+                                                   class="form-control" value="{{ actual_price }}" disabled>
+
+                                        {% else %}
+                                            <input type="number" name="actual_price" id="actual_price"
+                                                   class="form-control">
+
+                                        {% endif %}
+                                        <input type="text" name="service_no_hidden" id="service_no_hidden"
+                                               style="display:none;" value="{{ service_no }}">
                                     </div>
                                 </div>
                                 <div class="col-lg">
                                     <div class="form-group d-flex align-items-center" style="height: 100%;">
                                         <label for="is_delivered" class="mb-0 mr-2" style="font-size: 1rem;">Is
                                             Delivered</label>
-                                        <input type="checkbox" name="is_delivered" id="is_delivered"
-                                               class="custom-checkbox">
+                                        {% if is_delivered %}
+                                            <input type="checkbox" name="is_delivered" id="is_delivered"
+                                                   checked="{{ is_delivered }}"
+                                                   class="custom-checkbox" disabled>
+                                        {% else %}
+                                            <input type="checkbox" name="is_delivered" id="is_delivered"
+                                                   class="custom-checkbox">
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -97,8 +121,17 @@
                                     <div class="form-group">
                                         <label for="receiving-image">Receiving Image</label>
                                         <div id="image-preview"
-                                             style="width: 70%; height: 70%; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
-                                            <span style="color: #999;">No Image</span>
+                                             style="width: 345px; height: 246px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                            {% if receiving_image %}
+                                                <img id="receiving_image" src="{{ receiving_image }}"
+                                                     alt="No Image"
+                                                     style="width: 100%; height: 100%; object-fit: cover;">
+                                            {% else %}
+                                                <img id="receiving_image"
+                                                     src="{% static 'img.png' %}"
+                                                     alt="No Image"
+                                                     style="width: 100%; height: 100%; object-fit: cover;">
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -110,15 +143,22 @@
                                         <div class="d-flex align-items-start">
                                             <!-- Preview Box -->
                                             <div id="delivery-image-preview"
-                                                 style="width: 345px; height: 246px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                                 style="width: 345px; height: 246px;  border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                                {% if delivery_image %}
+                                                <img id="delivery_image" src="{{ delivery_image }}"
+                                                     alt="No Image"
+                                                     style="width: 100%; height: 100%; object-fit: cover;">
+                                            {% else %}
                                                 <img id="delivery_image"
                                                      src="{% static 'img.png' %}"
                                                      alt="No Image"
                                                      style="width: 100%; height: 100%; object-fit: cover;">
+                                            {% endif %}
                                             </div>
 
 
                                             <!-- Button & hidden fields -->
+                                            {% if not delivery_image %}
                                             <div class="ml-3">
                                                 <button type="button" class="btn btn-primary btn-sm mb-2"
                                                         id="captureBtn"
@@ -127,13 +167,15 @@
                                                 <input type="hidden" name="captured_image" id="captured_image">
 
                                             </div>
+                                        {% endif %}
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Empty Spacer Column -->
                                 <div class="col-lg">
-                                    <label for="capture" id="delivery_image_preview" style="display: none"> Delivery Image Preview</label>
+                                    <label for="capture" id="delivery_image_preview" style="display: none"> Delivery
+                                        Image Preview</label>
                                     <video id="video" width="160" height="120" autoplay
                                            style="display: none; border: 1px solid #ccc;"></video>
                                     <canvas id="canvas" width="160" height="120"
@@ -144,10 +186,15 @@
                             <div class="row">
 
                                 <div class="col-lg text-right">
-                                    <button type="submit" class="btn btn-success mt-3" id="submitBtn">
-                                        <i class="fa fa-print" aria-hidden="true"></i>&nbsp;
-                                        Save and Print
-                                    </button>
+                                    {% if delivery_remarks and actual_price and is_delivered and delivery_image %}
+                                        <button type="submit" class="btn btn-success mt-3" id="submitBtn">
+                                            <i class="fa fa-print" aria-hidden="true"></i>&nbsp;Print
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-success mt-3" id="submitBtn">
+                                            <i class="fa fa-save" aria-hidden="true"></i>&nbsp;Save and Print
+                                        </button>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -164,48 +211,6 @@
 
 {% block scripts %}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (data.success) {
-                document.getElementById('service_type').value = data.receiving.service_type;
-                document.getElementById('service_no_hidden').value = data.receiving.service_no;
-                document.getElementById('customer_name').value = data.receiving.customer_name;
-                document.getElementById('customer_phone').value = data.receiving.customer_phone;
-                document.getElementById('remarks').value = data.receiving.remarks;
-                if (data.receiving.delivery_remarks) {
-                    document.getElementById('delivery_remarks').value = data.receiving.delivery_remarks;
-                    document.getElementById('delivery_remarks').disabled = 'true';
-                }
-                if (data.receiving.actual_price) {
-                    document.getElementById('actual_price').value = data.receiving.actual_price;
-                    document.getElementById('actual_price').disabled = 'true';
-                }
-                if (data.receiving.is_delivered) {
-                    document.getElementById('is_delivered').checked = data.receiving.is_delivered;
-                    document.getElementById('is_delivered').disabled = 'true';
-                }
-                if (data.receiving.delivery_remarks && data.receiving.actual_price && data.receiving.is_delivered && data.receiving.delivery_image) {
-                    document.getElementById('submitBtn').innerHTML = '<i class="fa fa-print" aria-hidden="true"></i>&nbsp; Print';
-                }
-
-                document.getElementById('description').value = data.receiving.description;
-                document.getElementById('estimated_price').value = data.receiving.estimated_price;
-                document.getElementById('delivery-container').style.display = 'block';
-
-                if (data.receiving.receiving_image) {
-                    const imgPreview = document.getElementById('image-preview');
-                    imgPreview.innerHTML = `<img src="${data.receiving.receiving_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
-                }
-                if (data.receiving.delivery_image) {
-                    const imgPreview = document.getElementById('delivery-image-preview');
-                    imgPreview.innerHTML = `<img src="${data.receiving.delivery_image}" alt="Receiving Image" style="width: 100%; height: 100%; object-fit: contain;">`;
-                    document.getElementById('captureBtn').style.display = 'none';
-                }
-            } else {
-                alert('Receiving not found');
-            }
-        });
-    </script>
 
     <script>
         let videoStream = null;
@@ -255,37 +260,37 @@
     </script>
 
     <script>
-    document.getElementById('delivery-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    const serviceNo = document.getElementById('service_no_hidden').value;
+        document.getElementById('delivery-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const serviceNo = document.getElementById('service_no_hidden').value;
 
-    // Check button text to decide redirect behavior
-    const shouldRedirect = document.getElementById('submitBtn').textContent.trim() !== 'Print';
-    formData.append('should_redirect', shouldRedirect ? '1' : '0');
+            // Check button text to decide redirect behavior
+            const shouldRedirect = document.getElementById('submitBtn').textContent.trim() !== 'Print';
+            formData.append('should_redirect', shouldRedirect ? '1' : '0');
 
-    fetch(`/receiving/update/${serviceNo}/`, {
-        method: "POST",
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.print_url) {
-            window.open(data.print_url, '_blank');
-        }
-        if (data.redirect_url) {
-            window.location.href = data.redirect_url;
-        }
-    })
-    .catch(err => {
-        alert("Error submitting form.");
-        console.error(err);
-    });
-});
+            fetch(`/receiving/${serviceNo}/`, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.print_url) {
+                        window.open(data.print_url, '_blank');
+                    }
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                })
+                .catch(err => {
+                    alert("Error submitting form.");
+                    console.error(err);
+                });
+        });
 
 
     </script>
