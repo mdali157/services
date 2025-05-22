@@ -2,6 +2,8 @@ from unittest.mock import DEFAULT
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.timezone import now
+
 from customers.models import Customer
 # Create your models here.
 
@@ -27,7 +29,7 @@ class Receiving(models.Model):
     delivery_image = models.ImageField(blank=True, null=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     is_delivered = models.BooleanField(default=False, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateField(default=now, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_receivings')
     modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='modified_receivings')

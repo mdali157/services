@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'receiving',
     'accounts',
     'customers',
+    'casting',
 
 ]
 

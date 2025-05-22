@@ -10,6 +10,7 @@ urlpatterns = [
     path('receiving/', include('receiving.urls')),
     path('accounts/', include('accounts.urls')),
     path('customers/', include('customers.urls')),
+    path('casting/', include('casting.urls')),
 
 ]
 

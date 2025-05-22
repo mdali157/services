@@ -119,7 +119,7 @@ def get_receiving_and_update_delivery_fields(request, service_no):
         }
 
         if should_redirect:
-            response_data['redirect_url'] = reverse('receiving:all_receivings')
+            response_data['redirect_url'] = reverse('receiving:all_receiving')
 
         return JsonResponse(response_data)
 
