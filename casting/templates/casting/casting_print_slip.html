@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Casting Slip</title>
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 14px;
+            margin: 0;
+            padding: 10px;
+        }
+        .slip {
+            width: 280px;
+        }
+        .center {
+            text-align: center;
+        }
+        .barcode {
+            margin: 10px auto;
+            text-align: center;
+        }
+        .field-label {
+            font-weight: bold;
+        }
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body onload="window.print()">
+    <div class="slip">
+        <div class="center">
+            <h3>Casting Slip</h3>
+        </div>
+        <hr>
+        <p><span class="field-label">Casting No:</span> {{ casting.casting_no }}</p>
+        <p><span class="field-label">Customer Name:</span> {{ casting.customer.name }}</p>
+        <p><span class="field-label">Phone:</span> {{ casting.customer.phone_number }}</p>
+        <p><span class="field-label">Karate:</span> {{ casting.karate }}</p>
+        <p><span class="field-label">Color:</span> {{ casting.color }}</p>
+        <p><span class="field-label">Description:</span> {{ casting.description }}</p>
+        <p><span class="field-label">Date:</span> {{ casting.created_at }}</p>
+        <div class="barcode">
+            <svg id="barcode"></svg>
+        </div>
+    </div>
+
+    <script>
+        JsBarcode("#barcode", "{{ casting.casting_no }}", {
+            format: "CODE128",
+            displayValue: false,
+            height: 40,
+            width: 1.8,
+            margin: 0
+        });
+    </script>
+
+    <div class="center">
+        <button onclick="window.print()">Print Again</button>
+    </div>
+</body>
+</html>

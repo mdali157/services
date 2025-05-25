@@ -16,12 +16,13 @@ from .models import *
 def add_receivings(request):
     if request.method == 'POST':
         service_type = request.POST.get("service_type")
-        customer_name = request.POST.get("customer_name").strip()
+        customer_name = request.POST.get("customer_name").strip().capitalize()
         customer_phone = request.POST.get("customer_phone").strip()
         remarks = request.POST.get("remarks")
         description = request.POST.get("description")
         estimated_price = request.POST.get("estimated_price")
         captured_image_data = request.POST.get("captured_image")  # from hidden input
+        creation_date = request.POST.get("creation_date")  # from hidden input
 
         # Get or create customer
         try:
@@ -41,6 +42,7 @@ def add_receivings(request):
             actual_price=0,
             created_by=request.user,
             modified_by=request.user,
+            created_at=creation_date,
             customer=customer
         )
 
@@ -147,5 +149,13 @@ def print_receiving_slip(request, receiving_id):
 
 
 def get_all_receiving(request):
-    all_receiving = Receiving.objects.all()
+    status = request.GET.get('status', 'undelivered')
+
+    if status == 'delivered':
+        all_receiving = Receiving.objects.filter(is_delivered=True)
+    elif status == 'undelivered':
+        all_receiving = Receiving.objects.filter(is_delivered=False)
+    else:  # 'all'
+        all_receiving = Receiving.objects.all()
+
     return render(request, 'receiving/all_receiving.html', {'all_receiving': all_receiving})

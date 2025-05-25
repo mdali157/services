@@ -40,7 +40,7 @@ class Casting(models.Model):
     def save(self, *args, **kwargs):
         if self.casting_no is None:
             last = Casting.objects.order_by('-casting_no').first()
-            self.service_no = 111111 if not last or not last.casting_no else last.casting_no + 1
+            self.casting_no = 111111 if not last or not last.casting_no else last.casting_no + 1
         super().save(*args, **kwargs)
 
     def __str__(self):

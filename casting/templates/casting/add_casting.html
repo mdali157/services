@@ -8,34 +8,21 @@
 {% block content %}
 
 
-    <form id="receiving-form" action="" method="post" enctype="multipart/form-data">
+    <form id="casting-form" action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
-                    <h3>Receiving Details</h3>
+                    <h3>Casting Details</h3>
                     <div class="card-box">
                         <div class="row">
                             <div class="col-lg">
                                 <div class="form-group">
-                                    <label for="service_no">Service no</label>
-                                    <input type="text" name="service_no" disabled
-                                            class="form-control" id="service_no" value="{{ next_service_no }}">
+                                    <label for="service_no">Casting no</label>
+                                    <input type="text" name="casting_no" disabled
+                                            class="form-control" id="casting_no" value="{{ next_casting_no }}">
                                 </div>
                             </div>
-                            <div class="col-lg">
-                                <div class="form-group">
-                                    <label for="service_type">Service Type</label>
-                                    <select type="text" name="service_type"
-                                            required class="form-control" id="service_type">
-                                        {% for s in service_type %}
-                                            <option value="{{ s.name }}">{{ s.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
                             <div class="col-lg">
                                 <div class="form-group">
                                     <label for="customer_name">Customer Name</label>
@@ -51,6 +38,24 @@
                                            placeholder="Customer Phone" class="form-control" id="customer_phone">
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="karate">Karate</label>
+                                    <input value="" type="text" name="karate" maxlength="50"
+                                           required placeholder="Karate" class="form-control" id="karate">
+                                    <ul id="karate-suggestions" class="suggestions"></ul>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="color">Color</label>
+                                    <input value="" type="text" name="color"
+                                           placeholder="Color" class="form-control" id="color">
+                                    <ul id="color-suggestions" class="suggestions"></ul>
+                                </div>
+                            </div>
                             <div class="col-lg">
                                 <div class="form-group">
                                     <label for="creation_date">Date</label>
@@ -60,13 +65,6 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg">
-                                <div class="form-group">
-                                    <label for="remarks">Remarks</label>
-                                    <input value="" type="text" name="remarks" maxlength="50"
-                                           placeholder="Remarks" class="form-control" id="remarks">
-                                </div>
-                            </div>
                             <div class="col-lg">
                                 <div class="form-group">
                                     <label for="description">Description</label>
@@ -85,7 +83,7 @@
                         <div class="row">
                             <div class="col-lg">
                                 <div class="form-group">
-                                    <label for="capture">Receiving Image</label>
+                                    <label for="capture">Casting Image</label>
                                     <div class="d-flex align-items-start">
                                         <!-- Preview Box -->
                                         <div id="image-preview"
@@ -109,7 +107,7 @@
 
                             <!-- Spacer + Hidden Video/Canvas Elements -->
                             <div class="col-lg">
-                                <label for="capture" id="receiving_image_preview" style="display: none">Receiving Image
+                                <label for="capture" id="receiving_image_preview" style="display: none">Casting Image
                                     Preview</label>
                                 <video id="video" width="160" height="120" autoplay
                                        style="display: none; border: 1px solid #ccc;"></video>
@@ -145,7 +143,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const customerInput = document.getElementById('customer_name');
+            const karateInput = document.getElementById('karate');
+            const colorInput = document.getElementById('color');
             const suggestionList = document.getElementById('customer-suggestions');
+            const karateSuggestionList = document.getElementById('karate-suggestions');
+            const colorSuggestionList = document.getElementById('color-suggestions');
             const dateInput = document.getElementById("creation_date");
             dateInput.valueAsDate = new Date();
 
@@ -186,13 +188,98 @@
                 }
             });
 
+            karateInput.addEventListener('input', function () {
+                const query = this.value.trim();
+
+                if (query.length > 0) {
+                    fetch(`/casting/search/karate/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const suggestions = data.suggestions;
+                            karateSuggestionList.innerHTML = '';
+
+                            if (suggestions.length > 0) {
+                                suggestions.forEach(suggestion => {
+                                    const listItem = document.createElement('li');
+                                    listItem.textContent = `${suggestion.name}`;
+                                    listItem.style.cursor = 'pointer';
+
+                                    listItem.addEventListener('click', function () {
+                                        karateInput.value = suggestion.name;
+                                        karateSuggestionList.style.display = 'none';
+                                    });
+
+                                    karateSuggestionList.appendChild(listItem);
+                                });
+
+                                karateSuggestionList.style.display = 'block';
+                            } else {
+                                karateSuggestionList.style.display = 'none';
+                            }
+                        });
+                } else {
+                    karateSuggestionList.style.display = 'none';
+                    karateSuggestionList.innerHTML = '';
+                }
+            });
+
+
+            colorInput.addEventListener('input', function () {
+                const query = this.value.trim();
+
+                if (query.length > 1) {
+                    fetch(`/casting/search/color/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const suggestions = data.suggestions;
+                            colorSuggestionList.innerHTML = '';
+
+                            if (suggestions.length > 0) {
+                                suggestions.forEach(suggestion => {
+                                    const listItem = document.createElement('li');
+                                    listItem.textContent = `${suggestion.name}`;
+                                    listItem.style.cursor = 'pointer';
+
+                                    listItem.addEventListener('click', function () {
+                                        colorInput.value = suggestion.name;
+                                        colorSuggestionList.style.display = 'none';
+                                    });
+
+                                    colorSuggestionList.appendChild(listItem);
+                                });
+
+                                colorSuggestionList.style.display = 'block';
+                            } else {
+                                colorSuggestionList.style.display = 'none';
+                            }
+                        });
+                } else {
+                    colorSuggestionList.style.display = 'none';
+                    colorSuggestionList.innerHTML = '';
+                }
+            });
+
+
             document.addEventListener('click', function (event) {
                 if (!customerInput.contains(event.target) && !suggestionList.contains(event.target)) {
                     suggestionList.style.display = 'none';
                 }
             });
+            // Close karate suggestions if clicked outside
+            document.addEventListener('click', function (event) {
+                if (!karateInput.contains(event.target) && !karateSuggestionList.contains(event.target)) {
+                    karateSuggestionList.style.display = 'none';
+                }
+            });
 
-                document.getElementById('service_type').focus();
+            document.addEventListener('click', function (event) {
+                if (!colorInput.contains(event.target) && !colorSuggestionList.contains(event.target)) {
+                    colorSuggestionList.style.display = 'none';
+                }
+            });
+
+
+            document.getElementById('customer_name').focus();
 
         });
 
@@ -247,7 +334,7 @@
     </script>
 
     <script>
-        document.getElementById('receiving-form').addEventListener('submit', function (e) {
+        document.getElementById('casting-form').addEventListener('submit', function (e) {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);

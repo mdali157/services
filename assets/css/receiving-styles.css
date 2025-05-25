@@ -19,7 +19,7 @@
         border: 1px solid #ccc;
     }
 
-    #customer-suggestions {
+    .suggestions {
         list-style: none;
         margin: 0;
         padding: 0;
@@ -33,12 +33,12 @@
         overflow-y: auto;
     }
 
-    #customer-suggestions li {
+    .suggestions li {
         padding: 6px 12px;
         cursor: pointer;
     }
 
-    #customer-suggestions li:hover {
+    .suggestions li:hover {
         background-color: #f0f0f0;
     }
 
@@ -53,6 +53,6 @@
 }
 
 
-#customer-suggestions {
+.suggestions {
     display: none;
 }
