@@ -8,5 +8,7 @@ urlpatterns = [
     path('search/karate/', views.search_karate, name="search_karate"),
     path('search/color/', views.search_casting, name="search_casting"),
     path('print/<int:casting_id>/', views.print_casting_slip, name="print_casting_slip"),
+    path('flask', views.all_flask, name="all_flask"),
+    path('add/flask', views.add_flask, name="add_flask"),
 
 ]

@@ -109,3 +109,19 @@ def search_casting(request):
 def print_casting_slip(request, casting_id):
     casting = get_object_or_404(Casting, pk=casting_id)
     return render(request, 'casting/casting_print_slip.html', {'casting': casting})
+
+def all_flask(request):
+    flasks = Flask.objects.all().order_by('-created_at')
+    return render(request, 'casting/all_flask.html', {
+        'all_flask': flasks,
+    })
+
+def add_flask(request):
+    next_id = (Flask.objects.aggregate(Max('id'))['id__max'] or 0) + 1
+    unflasked = Casting.objects.filter(flask__isnull=True)
+    if request.method == 'POST':
+        return redirect('casting:all_flask')
+    return render(request, 'casting/add_flask.html', {
+        'next_flask_id': next_id,
+        'unflasked_castings': unflasked,
+    })

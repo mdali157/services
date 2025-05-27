@@ -1,0 +1,140 @@
+{% extends 'base_template.html' %}
+{% load static %}
+
+{% block head %}
+    <link href="{% static 'css/receiving-styles.css' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+    <form id="add-flask-form"
+          action="{% url 'casting:add_flask' %}"
+          method="post"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="container-fluid my-4">
+            <h3>Add New Flask</h3>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="flask_id" class="form-label">Flask No</label>
+                    <input type="text"  id="flask_id"  name="flask_id" class="form-control" value="{{ next_flask_id }}"  disabled>
+                </div>
+                <div class="col-md-3">
+                    <label for="karate" class="form-label">Karate</label>
+                    <input type="text"  id="karate" name="karate"  class="form-control"  required value="">
+                </div>
+                    <div class="col-md-3">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="text" id="color" name="color" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="creation_date" class="form-label">Date</label>
+                        <input type="date" id="creation_date" name="creation_date" class="form-control" required>
+                    </div>
+
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="input_weight" class="form-label">Input Weight</label>
+                    <input type="number" step="0.01" id="input_weight" name="input_weight" class="form-control" required
+                           placeholder="e.g. 12.34">
+                </div>
+                <div class="col-md-3">
+                    <label for="output_weight" class="form-label">Output Weight</label>
+                    <input type="number" step="0.01" id="output_weight" name="output_weight" class="form-control"
+                           required
+                           placeholder="e.g. 10.00">
+                </div>
+                <div class="col-md-3">
+                    <label for="machine_wastage" class="form-label">Machine Wastage</label>
+                    <input type="number" step="0.01" id="machine_wastage" name="machine_wastage" class="form-control"
+                           readonly>
+                </div>
+                <div class="col-md-3">
+                    <label for="production_weight" class="form-label">Production Weight</label>
+                    <input type="number" step="0.01" id="production_weight" name="production_weight"
+                           class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="related_castings" class="form-label">
+                      Castings
+                    </label>
+                    <select class="form-select"
+                            multiple
+                            size="5"
+                            id="related_castings"
+                            name="related_castings">
+                        {% for casting in unflasked_castings %}
+                            <option value="{{ casting.id }}">
+                                {{ casting.casting_no }} — {{ casting.customer.name }}
+                            </option>
+                        {% empty %}
+                            <option disabled>No eligible castings</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+
+            <div class="text-end">
+                <button type="submit" class="btn btn-success">
+                    <i class="fa fa-save"></i> Save Flask
+                </button>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let dateInput = document.getElementById('creation_date');
+            dateInput.valueAsDate = new Date();
+        });
+
+        // recompute wastage & (by default) production on weight change
+        function recalc() {
+            let inp = parseFloat(document.getElementById('input_weight').value) || 0;
+            let out = parseFloat(document.getElementById('output_weight').value) || 0;
+            let wastage = (inp - out).toFixed(2);
+            document.getElementById('machine_wastage').value = wastage;
+            document.getElementById('production_weight').value = out.toFixed(2);
+        }
+
+        document.getElementById('input_weight')
+            .addEventListener('input', recalc);
+        document.getElementById('output_weight')
+            .addEventListener('input', recalc);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            new TomSelect('#related_castings', {
+                plugins: ['remove_button'],    // little “×” to remove selections
+                maxItems: null,                // unlimited selections
+                searchField: ['text'],         // search on the option text
+                render: {
+                    option: (data, escape) => {
+                        // put a checkbox in front of each option
+                        return `<div class="ts-option">
+                    <input type="checkbox" ${data.$selected ? 'checked' : ''} disabled />
+                    ${escape(data.text)}
+                  </div>`;
+                    },
+                    item: (data, escape) => {
+                        // how selected items look in the input area
+                        return `<div>${escape(data.text)}</div>`;
+                    }
+                }
+            });
+        });
+    </script>
+
+
+{% endblock %}

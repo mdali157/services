@@ -6,6 +6,21 @@ from customers.models import Customer
 
 
 # Create your models here.
+class Flask(models.Model):
+    karate = models.CharField(max_length=158 ,blank=True, null=True)
+    color = models.CharField(max_length=158 ,blank=True, null=True)
+    input_weight = models.CharField(max_length=158 ,blank=True, null=True)
+    output_weight = models.CharField(max_length=158 ,blank=True, null=True)
+    machine_wastage = models.CharField(max_length=158 ,blank=True, null=True)
+    production_weight = models.CharField(max_length=158 ,blank=True, null=True)
+    created_at = models.DateField(default=now, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.id
+
+
+
 class Color(models.Model):
     name = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -32,6 +47,17 @@ class Casting(models.Model):
     image = models.ImageField(blank=True, null=True)
     delivery_image = models.ImageField(blank=True, null=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    flask = models.ForeignKey(Flask, on_delete=models.SET_NULL, null=True, blank=True)
+    weight =  models.CharField(max_length=158 ,blank=True, null=True)
+    converted24k =  models.CharField(max_length=158 ,blank=True, null=True)
+    wastage_percentage =  models.CharField(max_length=158 ,blank=True, null=True)
+    wastage_weight =  models.CharField(max_length=158 ,blank=True, null=True)
+    total_weight24k =  models.CharField(max_length=158 ,blank=True, null=True)
+    gold_received =  models.CharField(max_length=158 ,blank=True, null=True)
+    service_charges_rate =  models.CharField(max_length=158 ,blank=True, null=True)
+    service_charges_amount =  models.CharField(max_length=158 ,blank=True, null=True)
+    cash_received =  models.CharField(max_length=158 ,blank=True, null=True)
+    remarks =  models.CharField(max_length=158 ,blank=True, null=True)
     created_at = models.DateField(default=now, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_casting')

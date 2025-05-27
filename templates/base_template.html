@@ -24,6 +24,10 @@
     <link href="{% static 'css/app.min.css' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>
     <link href="{% static 'sj.css' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>
 
+<link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.0/dist/css/coreui.min.css" rel="stylesheet">
+
+
+
     {% block head %}
     {% endblock %}
 
@@ -120,6 +124,9 @@
                 <ul class="metismenu" id="side-menu">
                     <li><a href="{% url 'casting:add_casting' %}">Casting </a></li>
                 </ul>
+                <ul class="metismenu" id="side-menu">
+                    <li><a href="{% url 'casting:all_flask' %}">Flask </a></li>
+                </ul>
 
             </div>
             <!-- End Sidebar -->
@@ -165,6 +172,8 @@
 <!--Morris Chart-->
 <script src="{% static 'libs/morris-js/morris.min.js' %}"></script>
 <script src="{% static 'libs/raphael/raphael.min.js' %}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.0/dist/js/coreui.bundle.min.js"></script>
 
 
 <!-- Datatable plugin js -->
