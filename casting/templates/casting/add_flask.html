@@ -3,7 +3,6 @@
 
 {% block head %}
     <link href="{% static 'css/receiving-styles.css' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
 {% endblock %}
 
@@ -97,7 +96,6 @@
             dateInput.valueAsDate = new Date();
         });
 
-        // recompute wastage & (by default) production on weight change
         function recalc() {
             let inp = parseFloat(document.getElementById('input_weight').value) || 0;
             let out = parseFloat(document.getElementById('output_weight').value) || 0;
@@ -106,34 +104,8 @@
             document.getElementById('production_weight').value = out.toFixed(2);
         }
 
-        document.getElementById('input_weight')
-            .addEventListener('input', recalc);
-        document.getElementById('output_weight')
-            .addEventListener('input', recalc);
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            new TomSelect('#related_castings', {
-                plugins: ['remove_button'],    // little “×” to remove selections
-                maxItems: null,                // unlimited selections
-                searchField: ['text'],         // search on the option text
-                render: {
-                    option: (data, escape) => {
-                        // put a checkbox in front of each option
-                        return `<div class="ts-option">
-                    <input type="checkbox" ${data.$selected ? 'checked' : ''} disabled />
-                    ${escape(data.text)}
-                  </div>`;
-                    },
-                    item: (data, escape) => {
-                        // how selected items look in the input area
-                        return `<div>${escape(data.text)}</div>`;
-                    }
-                }
-            });
-        });
+        document.getElementById('input_weight').addEventListener('input', recalc);
+        document.getElementById('output_weight').addEventListener('input', recalc);
     </script>
 
 
