@@ -1,0 +1,313 @@
+{% extends 'base_template.html' %}
+{% load static %}
+
+{% block head %}
+    <link href="{% static 'css/receiving-styles.css' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>
+{% endblock %}
+
+{% block content %}
+    <form id="casting-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <h3>Edit Casting</h3>
+                    <div class="card-box">
+
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Casting no</label>
+                                    <input type="text" class="form-control" disabled
+                                           value="{{ casting.casting_no }}">
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Customer Name</label>
+                                    <input type="text" name="customer_name" maxlength="50" required
+                                           class="form-control" id="customer_name" readonly
+                                           value="{{ casting.customer.name }}">
+                                    <ul id="customer-suggestions" class="suggestions"></ul>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Customer Phone</label>
+                                    <input type="text" name="customer_phone" class="form-control" readonly
+                                           id="customer_phone" value="{{ casting.customer.phone_number }}">
+                                </div>
+                            </div>
+                        </div> <!-- /row -->
+
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Karate</label>
+                                    <input type="text" name="karate" maxlength="50" required
+                                           class="form-control" id="karate"
+                                           value="{{ casting.karate }}">
+                                    <ul id="karate-suggestions" class="suggestions"></ul>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Color</label>
+                                    <input type="text" name="color" class="form-control" id="color"
+                                           value="{{ casting.color }}">
+                                    <ul id="color-suggestions" class="suggestions"></ul>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" name="creation_date" required
+                                           class="form-control" id="creation_date"
+                                           value="{{ casting.created_at|date:'Y-m-d' }}">
+                                </div>
+                            </div>
+                        </div> <!-- /row -->
+
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" name="description" maxlength="200"
+                                           class="form-control" id="description"
+                                           value="{{ casting.description }}">
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="delivery_remarks">Delivery Remarks</label>
+                                        <input type="text" name="delivery_remarks" id="delivery_remarks"
+                                               value="{{ casting.remarks }}"
+                                               class="form-control" >
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group d-flex align-items-center" style="height: 100%;">
+                                    <label for="is_delivered" class="mb-0 mr-2" style="font-size: 1rem;">Is
+                                        Delivered</label>
+                                    {% if casting.is_delivered %}
+                                        <input type="checkbox" name="is_delivered" id="is_delivered"
+                                               checked="{{ is_delivered }}"
+                                               class="custom-checkbox">
+                                    {% else %}
+                                        <input type="checkbox" name="is_delivered" id="is_delivered"
+                                               class="custom-checkbox">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div> <!-- /row -->
+
+                        <div class="row">
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="receiving-image">Casting Image</label>
+                                    <div id="image-preview"
+                                         style="width: 345px; height: 246px; border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                        <img id="receiving_image"
+                                             src="{% if casting.image %}{{ casting.image.url }}{% else %}{% static 'img.png' %}{% endif %}"
+                                             alt="No Image"
+                                             style="width:100%;height:100%;object-fit:cover;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="capture">Casting Delivery Image</label>
+                                    <div class="d-flex align-items-start">
+                                        <!-- Preview Box -->
+                                        <div id="delivery-image-preview"
+                                             style="width: 345px; height: 246px;  border: 1px solid #ccc; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                            <img id="delivery_image"
+                                             src="{% if casting.delivery_image %}{{ casting.delivery_image.url }}{% else %}{% static 'img.png' %}{% endif %}"
+                                             alt="No Image"
+                                             style="width:100%;height:100%;object-fit:cover;">
+                                        </div>
+
+                                        <!-- Button & hidden fields -->
+                                        {% if not casting.delivery_image %}
+                                            <div class="ml-3">
+                                                <button type="button" class="btn btn-primary btn-sm mb-2"
+                                                        id="captureBtn"
+                                                        onclick="handleCapture()">Open Camera
+                                                </button>
+                                                <input type="hidden" name="captured_image" id="captured_image">
+
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Empty Spacer Column -->
+                            <div class="col-lg">
+                                <label for="capture" id="delivery_image_preview" style="display: none"> Delivery
+                                    Image Preview</label>
+                                <video id="video" width="160" height="120" autoplay
+                                       style="display: none; border: 1px solid #ccc;"></video>
+                                <canvas id="canvas" width="160" height="120"
+                                        style="display: none;"></canvas>
+                            </div>
+                        </div> <!-- /row -->
+
+                        <div class="row">
+                            <div class="col-lg text-right">
+                                <button type="submit" class="btn btn-success mt-3">
+                                    <i class="fa fa-print"></i> Save
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const customerInput = document.getElementById('customer_name');
+            const karateInput = document.getElementById('karate');
+            const colorInput = document.getElementById('color');
+            const suggestionList = document.getElementById('customer-suggestions');
+            const karateSuggestionList = document.getElementById('karate-suggestions');
+            const colorSuggestionList = document.getElementById('color-suggestions');
+
+            customerInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                if (query.length > 2) {
+                    fetch(`/customers/search/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionList.innerHTML = '';
+                            data.suggestions.forEach(suggestion => {
+                                const li = document.createElement('li');
+                                li.textContent = `${suggestion.name} - ${suggestion.phone}`;
+                                li.style.cursor = 'pointer';
+                                li.onclick = () => {
+                                    customerInput.value = suggestion.name;
+                                    document.getElementById('customer_phone').value = suggestion.phone;
+                                    suggestionList.style.display = 'none';
+                                };
+                                suggestionList.appendChild(li);
+                            });
+                            suggestionList.style.display = data.suggestions.length > 0 ? 'block' : 'none';
+                        });
+                } else {
+                    suggestionList.style.display = 'none';
+                }
+            });
+
+            karateInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                if (query.length > 0) {
+                    fetch(`/casting/search/karate/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            karateSuggestionList.innerHTML = '';
+                            data.suggestions.forEach(suggestion => {
+                                const li = document.createElement('li');
+                                li.textContent = suggestion.name;
+                                li.style.cursor = 'pointer';
+                                li.onclick = () => {
+                                    karateInput.value = suggestion.name;
+                                    karateSuggestionList.style.display = 'none';
+                                };
+                                karateSuggestionList.appendChild(li);
+                            });
+                            karateSuggestionList.style.display = data.suggestions.length > 0 ? 'block' : 'none';
+                        });
+                } else {
+                    karateSuggestionList.style.display = 'none';
+                }
+            });
+
+            colorInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                if (query.length > 1) {
+                    fetch(`/casting/search/color/?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            colorSuggestionList.innerHTML = '';
+                            data.suggestions.forEach(suggestion => {
+                                const li = document.createElement('li');
+                                li.textContent = suggestion.name;
+                                li.style.cursor = 'pointer';
+                                li.onclick = () => {
+                                    colorInput.value = suggestion.name;
+                                    colorSuggestionList.style.display = 'none';
+                                };
+                                colorSuggestionList.appendChild(li);
+                            });
+                            colorSuggestionList.style.display = data.suggestions.length > 0 ? 'block' : 'none';
+                        });
+                } else {
+                    colorSuggestionList.style.display = 'none';
+                }
+            });
+
+            // Hide suggestions if clicked outside
+            document.addEventListener('click', function (event) {
+                if (!customerInput.contains(event.target) && !suggestionList.contains(event.target)) {
+                    suggestionList.style.display = 'none';
+                }
+                if (!karateInput.contains(event.target) && !karateSuggestionList.contains(event.target)) {
+                    karateSuggestionList.style.display = 'none';
+                }
+                if (!colorInput.contains(event.target) && !colorSuggestionList.contains(event.target)) {
+                    colorSuggestionList.style.display = 'none';
+                }
+            });
+        });
+    </script>
+
+    <script>
+        let videoStream = null;
+        let cameraActive = false;
+
+        function handleCapture() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const receivingImage = document.getElementById('delivery_image');
+            const captureBtn = document.getElementById('captureBtn');
+            const previewLabel = document.getElementById('delivery_image_preview');
+
+            if (!cameraActive) {
+                navigator.mediaDevices.getUserMedia({video: true})
+                    .then(stream => {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        previewLabel.style.display = 'block';
+                        cameraActive = true;
+                        captureBtn.textContent = 'Capture Image';
+                    })
+                    .catch(err => {
+                        alert('Could not access the camera.');
+                        console.error(err);
+                    });
+            } else {
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/png');
+                document.getElementById('captured_image').value = imageData;
+                receivingImage.src = imageData;
+
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+                video.style.display = 'none';
+                previewLabel.style.display = 'none';
+                cameraActive = false;
+                captureBtn.textContent = 'Open Camera';
+            }
+        }
+    </script>
+
+
+{% endblock %}
+

@@ -158,4 +158,4 @@ def get_all_receiving(request):
     else:  # 'all'
         all_receiving = Receiving.objects.all()
 
-    return render(request, 'receiving/all_receiving.html', {'all_receiving': all_receiving})
+    return render(request, 'receiving/all_receiving.html', {'all_receiving': all_receiving,'selected_status': status,})

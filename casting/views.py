@@ -86,6 +86,56 @@ def add_casting(request):
     })
 
 
+@login_required
+def update_casting(request, casting_id):
+    casting = get_object_or_404(Casting, pk=casting_id)
+
+    if request.method == 'POST':
+        # 1. Read form fields
+        karate_value = request.POST.get("karate", "").strip().capitalize()
+        color_value = request.POST.get("color", "").strip().capitalize()
+        description = request.POST.get("description", "").strip()
+        delivery_remarks = request.POST.get("delivery_remarks", "").strip()
+        creation_date = request.POST.get("creation_date")  # YYYY-MM-DD
+        captured_image_data = request.POST.get("captured_image")  # data:image/png;base64,…
+        is_delivered = request.POST.get('is_delivered')
+
+
+        karate_obj, _ = Karate.objects.get_or_create(name=karate_value)
+        color_obj, _ = Color.objects.get_or_create(name=color_value)
+
+        # 3. Update fields on casting
+        casting.karate = karate_obj.name
+        casting.color = color_obj.name
+        casting.description = description
+        casting.remarks = delivery_remarks
+        casting.created_at = creation_date
+        casting.is_delivered = is_delivered == 'on'
+        casting.modified_by = request.user
+
+        # 4. Handle new base64 image if provided
+        if captured_image_data and ';base64,' in captured_image_data:
+            header, b64data = captured_image_data.split(';base64,')
+            ext = header.split('/')[-1]
+            binary = base64.b64decode(b64data)
+            fname = f"casting_{uuid.uuid4().hex[:10]}.{ext}"
+            img_file = InMemoryUploadedFile(
+                BytesIO(binary),
+                field_name='image',
+                name=fname,
+                content_type=f"image/{ext}",
+                size=len(binary),
+                charset=None
+            )
+            casting.delivery_image = img_file
+
+        casting.save()
+        return redirect('casting:all_casting')
+
+    return render(request, 'casting/update_casting.html', {
+        'casting': casting
+    })
+
 def search_karate(request):
     query = request.GET.get('q', '')
     all_karate = Karate.objects.filter(name__icontains=query)
@@ -110,6 +160,12 @@ def print_casting_slip(request, casting_id):
     casting = get_object_or_404(Casting, pk=casting_id)
     return render(request, 'casting/casting_print_slip.html', {'casting': casting})
 
+
+def casting_flask_print_slip(request, casting_id):
+    casting = get_object_or_404(Casting, pk=casting_id)
+    return render(request, 'casting/casting_flask_print_slip.html', {'casting': casting})
+
+
 def all_flask(request):
     flasks = Flask.objects.all().order_by('-created_at')
     return render(request, 'casting/all_flask.html', {
@@ -118,9 +174,20 @@ def all_flask(request):
 
 
 def all_casting(request):
-    castings_with_flask = Casting.objects.filter(flask__isnull=False).order_by('-created_at')
+    status = request.GET.get('status', 'undelivered')
+
+    if status == 'delivered':
+        all_casting = Casting.objects.filter(is_delivered=True)
+    elif status == 'undelivered':
+        all_casting = Casting.objects.filter(is_delivered=False)
+    else:  # 'all'
+        all_casting = Casting.objects.all()
+
+
+
     return render(request, 'casting/all_casting.html', {
-        'castings_with_flask': castings_with_flask,
+        'castings_with_flask': all_casting,
+        'selected_status': status,
     })
 
 
@@ -143,8 +210,8 @@ def add_flask(request):
 
         # 2. Loop through selected castings and update each
         for key in request.POST:
-            if key.startswith("casting_") and key.endswith("_weight"):
-                base = key.replace("_weight", "")  # casting_12
+            if key.startswith("casting_") and key.endswith("_sno"):
+                base = key.replace("_sno", "")  # casting_12
                 casting_sno = base.split("_")[1]
                 try:
                     casting = Casting.objects.get(id=casting_sno)
