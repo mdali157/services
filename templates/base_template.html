@@ -33,8 +33,6 @@
     {% block head %}
     {% endblock %}
 
-    {#    <link href="{% static 'js/app.min.js' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>#}
-    {#    <link href="{% static 'js/vendor.min.js' %}" rel="stylesheet" type="text/css" id="app-stylesheet"/>#}
 
 </head>
 <body>
@@ -124,10 +122,13 @@
                     <li><a href="{% url 'receiving:all_receiving' %}">Delivery </a></li>
                 </ul>
                 <ul class="metismenu" id="side-menu">
-                    <li><a href="{% url 'casting:add_casting' %}">Casting </a></li>
+                    <li><a href="{% url 'casting:add_casting' %}">Add Casting </a></li>
                 </ul>
                 <ul class="metismenu" id="side-menu">
                     <li><a href="{% url 'casting:all_flask' %}">Flask </a></li>
+                </ul>
+                <ul class="metismenu" id="side-menu">
+                    <li><a href="{% url 'casting:all_casting' %}">All Casting </a></li>
                 </ul>
 
             </div>

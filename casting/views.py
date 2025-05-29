@@ -116,6 +116,14 @@ def all_flask(request):
         'all_flask': flasks,
     })
 
+
+def all_casting(request):
+    castings_with_flask = Casting.objects.filter(flask__isnull=False).order_by('-created_at')
+    return render(request, 'casting/all_casting.html', {
+        'castings_with_flask': castings_with_flask,
+    })
+
+
 @login_required
 def add_flask(request):
     next_id = (Flask.objects.aggregate(Max('id'))['id__max'] or 0) + 1
@@ -163,3 +171,63 @@ def add_flask(request):
         'next_flask_id': next_id,
         'unflasked_castings': unflasked,
     })
+
+@login_required
+def update_flask(request, flask_id):
+    flask = get_object_or_404(Flask, id=flask_id)
+    existing_castings = Casting.objects.filter(flask=flask)
+    unlinked_castings = Casting.objects.filter(flask__isnull=True)
+
+    if request.method == 'POST':
+        # Update flask fields
+        flask.karate = request.POST.get("karate", "").strip()
+        flask.color = request.POST.get("color", "").strip()
+        flask.input_weight = request.POST.get("input_weight", "")
+        flask.output_weight = request.POST.get("output_weight", "")
+        flask.machine_wastage = request.POST.get("machine_wastage", "")
+        flask.production_weight = request.POST.get("production_weight", "")
+        flask.created_at = request.POST.get("creation_date", "")
+        flask.save()
+
+        # Update existing casting data
+        for casting in existing_castings:
+            prefix = f"casting_{casting.id}_"
+            casting.weight = request.POST.get(f"{prefix}weight")
+            casting.converted24k = request.POST.get(f"{prefix}converted")
+            casting.wastage_percentage = request.POST.get(f"{prefix}wastage_percent")
+            casting.wastage_weight = request.POST.get(f"{prefix}wastage_weight")
+            casting.total_weight24k = request.POST.get(f"{prefix}total_24k")
+            casting.gold_received = request.POST.get(f"{prefix}gold_received")
+            casting.service_charges_rate = request.POST.get(f"{prefix}service_rate")
+            casting.service_charges_amount = request.POST.get(f"{prefix}service_amount")
+            casting.cash_received = request.POST.get(f"{prefix}cash_received")
+            casting.modified_by = request.user
+            casting.save()
+
+        # Link new castings
+        selected_ids = request.POST.getlist("related_castings")
+        for casting_id in selected_ids:
+            if not existing_castings.filter(id=casting_id).exists():
+                casting = get_object_or_404(Casting, id=casting_id)
+                prefix = f"casting_{casting.id}_"
+                casting.weight = request.POST.get(f"{prefix}weight")
+                casting.converted24k = request.POST.get(f"{prefix}converted")
+                casting.wastage_percentage = request.POST.get(f"{prefix}wastage_percent")
+                casting.wastage_weight = request.POST.get(f"{prefix}wastage_weight")
+                casting.total_weight24k = request.POST.get(f"{prefix}total_24k")
+                casting.gold_received = request.POST.get(f"{prefix}gold_received")
+                casting.service_charges_rate = request.POST.get(f"{prefix}service_rate")
+                casting.service_charges_amount = request.POST.get(f"{prefix}service_amount")
+                casting.cash_received = request.POST.get(f"{prefix}cash_received")
+                casting.flask = flask
+                casting.modified_by = request.user
+                casting.save()
+
+        return redirect('casting:all_flask')
+
+    return render(request, 'casting/update_flask.html', {
+        'flask': flask,
+        'existing_castings': existing_castings,
+        'unlinked_castings': unlinked_castings,
+    })
+

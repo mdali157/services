@@ -44,9 +44,7 @@
                 <td>{{ flask.production_weight }}</td>
                 <td>{{ flask.created_at|date:"Y-m-d" }}</td>
                 <td>
-                    <a href="#"
-                       class="btn btn-primary btn-sm"
-                       title="Edit">
+                    <a href="{% url 'casting:update_flask' flask.id %}" class="btn btn-primary btn-sm" title="Edit">
                         <i class="fa fa-edit"></i>
                     </a>
                 </td>

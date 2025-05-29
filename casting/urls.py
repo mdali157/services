@@ -10,5 +10,7 @@ urlpatterns = [
     path('print/<int:casting_id>/', views.print_casting_slip, name="print_casting_slip"),
     path('flask', views.all_flask, name="all_flask"),
     path('add/flask', views.add_flask, name="add_flask"),
+    path('flask/<int:flask_id>/update/', views.update_flask, name='update_flask'),
+    path('all/', views.all_casting, name='all_casting'),
 
 ]
