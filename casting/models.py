@@ -17,7 +17,7 @@ class Flask(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 
@@ -43,7 +43,7 @@ class Casting(models.Model):
     karate = models.CharField(max_length=158 ,blank=True, null=True)
     color = models.CharField(max_length=158 ,blank=True, null=True)
     casting_no = models.PositiveIntegerField(unique=True, blank=True, null=True)
-    description = models.CharField(max_length=255)
+    description = models.CharField(max_length=255, blank=True, null=True)
     image = models.ImageField(blank=True, null=True)
     delivery_image = models.ImageField(blank=True, null=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)

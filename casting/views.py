@@ -116,11 +116,49 @@ def all_flask(request):
         'all_flask': flasks,
     })
 
+@login_required
 def add_flask(request):
     next_id = (Flask.objects.aggregate(Max('id'))['id__max'] or 0) + 1
     unflasked = Casting.objects.filter(flask__isnull=True)
+
     if request.method == 'POST':
+        # 1. Create Flask
+        flask = Flask.objects.create(
+            karate=request.POST.get("karate", "").strip(),
+            color=request.POST.get("color", "").strip(),
+            input_weight=request.POST.get("input_weight", ""),
+            output_weight=request.POST.get("output_weight", ""),
+            machine_wastage=request.POST.get("machine_wastage", ""),
+            production_weight=request.POST.get("production_weight", ""),
+            created_at=request.POST.get("creation_date", ""),
+        )
+
+        # 2. Loop through selected castings and update each
+        for key in request.POST:
+            if key.startswith("casting_") and key.endswith("_weight"):
+                base = key.replace("_weight", "")  # casting_12
+                casting_sno = base.split("_")[1]
+                try:
+                    casting = Casting.objects.get(id=casting_sno)
+                except Casting.DoesNotExist:
+                    continue
+
+                # Update casting fields
+                casting.weight = request.POST.get(f"{base}_weight")
+                casting.converted24k = request.POST.get(f"{base}_converted")
+                casting.wastage_percentage = request.POST.get(f"{base}_wastage_percent")
+                casting.wastage_weight = request.POST.get(f"{base}_wastage_weight")
+                casting.total_weight24k = request.POST.get(f"{base}_total_24k")
+                casting.gold_received = request.POST.get(f"{base}_gold_received")
+                casting.service_charges_rate = request.POST.get(f"{base}_service_rate")
+                casting.service_charges_amount = request.POST.get(f"{base}_service_amount")
+                casting.cash_received = request.POST.get(f"{base}_cash_received")
+                casting.flask = flask
+                casting.modified_by = request.user
+                casting.save()
+
         return redirect('casting:all_flask')
+
     return render(request, 'casting/add_flask.html', {
         'next_flask_id': next_id,
         'unflasked_castings': unflasked,
