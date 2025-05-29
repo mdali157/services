@@ -17,20 +17,21 @@
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label for="flask_id" class="form-label">Flask No</label>
-                    <input type="text"  id="flask_id"  name="flask_id" class="form-control" value="{{ next_flask_id }}"  disabled>
+                    <input type="text" id="flask_id" name="flask_id" class="form-control" value="{{ next_flask_id }}"
+                           disabled>
                 </div>
                 <div class="col-md-3">
                     <label for="karate" class="form-label">Karate</label>
-                    <input type="text"  id="karate" name="karate"  class="form-control"  required value="">
+                    <input type="text" id="karate" name="karate" class="form-control" required value="">
                 </div>
-                    <div class="col-md-3">
-                        <label for="color" class="form-label">Color</label>
-                        <input type="text" id="color" name="color" class="form-control" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="creation_date" class="form-label">Date</label>
-                        <input type="date" id="creation_date" name="creation_date" class="form-control" required>
-                    </div>
+                <div class="col-md-3">
+                    <label for="color" class="form-label">Color</label>
+                    <input type="text" id="color" name="color" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="creation_date" class="form-label">Date</label>
+                    <input type="date" id="creation_date" name="creation_date" class="form-control" required>
+                </div>
 
             </div>
 
@@ -61,9 +62,10 @@
             <div class="row mb-4">
                 <div class="col-md-6">
                     <label for="related_castings" class="form-label">
-                      Castings
+                        Castings
                     </label>
-                    <select class="form-control select2" multiple size="5" id="related_castings" name="related_castings">
+                    <select class="form-control select2" multiple size="5" id="related_castings"
+                            name="related_castings">
 
                         {% for casting in unflasked_castings %}
                             <option value="{{ casting.id }}">
@@ -101,7 +103,6 @@
             </div>
 
 
-
             <div class="text-end">
                 <button type="submit" class="btn btn-success">
                     <i class="fa fa-save"></i> Save Flask
@@ -123,7 +124,6 @@
             let out = parseFloat(document.getElementById('output_weight').value) || 0;
             let wastage = (inp - out).toFixed(2);
             document.getElementById('machine_wastage').value = wastage;
-            document.getElementById('production_weight').value = out.toFixed(2);
         }
 
         document.getElementById('input_weight').addEventListener('input', recalc);
@@ -137,48 +137,93 @@
     </script>
 
     <script>
-    const castingSelect = document.getElementById("related_castings");
-    const tableBody = document.querySelector("#casting-details-table tbody");
+        function recalculateRow(row) {
+            const karate = parseFloat(document.getElementById('karate').value) || 0;
 
-   $('.select2').on('change', function () {
-    const castingSelect = this;
-    const tableBody = document.querySelector("#casting-details-table tbody");
-    const selectedOptions = Array.from(castingSelect.selectedOptions);
-    const selectedIds = selectedOptions.map(opt => opt.value);
-    const existingRows = Array.from(tableBody.querySelectorAll("tr"));
+            const weight = parseFloat(row.querySelector(`[name$="_weight"]`).value) || 0;
+            const wastagePercent = parseFloat(row.querySelector(`[name$="_wastage_percent"]`).value) || 0;
+            const serviceRate = parseFloat(row.querySelector(`[name$="_service_rate"]`).value) || 0;
 
-    // Remove unselected rows
-    existingRows.forEach(row => {
-        const castingId = row.dataset.castingId;
-        if (!selectedIds.includes(castingId)) {
-            row.remove();
+            // Calculate values
+            const converted24k = (karate / 24) * weight;
+            const wastageWeight = (wastagePercent * converted24k) / 100;
+            const totalWeight24k = converted24k + wastageWeight;
+            const serviceAmount = serviceRate * weight;
+            const cashReceived = serviceAmount;
+
+            // Set values
+            row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
+            row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
+            row.querySelector(`[name$="_total_24k_display"]`).value = totalWeight24k.toFixed(2);
+            row.querySelector(`[name$="_total_24k"]`).value = totalWeight24k.toFixed(2);
+            row.querySelector(`[name$="_gold_received"]`).value = totalWeight24k.toFixed(2);
+            row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
+            row.querySelector(`[name$="_cash_received"]`).value = cashReceived.toFixed(2);
         }
-    });
 
-    // Add new rows
-    selectedOptions.forEach(opt => {
-        const id = opt.value;
-        if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
-            const row = document.createElement("tr");
-            row.setAttribute("data-casting-id", id);
-            row.innerHTML = `
-                <td><input type="text" name="casting_${id}_sno" class="form-control" value="${opt.text}" readonly></td>
-                <td><input type="text" name="casting_${id}_weight" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_converted" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_wastage_percent" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_wastage_weight" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_total_24k" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_gold_received" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_service_rate" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_service_amount" class="form-control"></td>
-                <td><input type="text" name="casting_${id}_cash_received" class="form-control"></td>
-            `;
-            tableBody.appendChild(row);
+        function bindRowEvents(row) {
+            const weightInput = row.querySelector(`[name$="_weight"]`);
+            const wastagePercentInput = row.querySelector(`[name$="_wastage_percent"]`);
+            const serviceRateInput = row.querySelector(`[name$="_service_rate"]`);
+
+            [weightInput, wastagePercentInput, serviceRateInput].forEach(input => {
+                input.addEventListener('input', () => recalculateRow(row));
+            });
         }
-    });
-});
 
-</script>
+        function recalculateAllRows() {
+            const rows = document.querySelectorAll('#casting-details-table tbody tr');
+            rows.forEach(row => recalculateRow(row));
+        }
+
+        // When karate changes, recalculate all rows
+        document.getElementById('karate').addEventListener('input', recalculateAllRows);
+
+        $('.select2').on('change', function () {
+            const castingSelect = this;
+            const tableBody = document.querySelector("#casting-details-table tbody");
+            const selectedOptions = Array.from(castingSelect.selectedOptions);
+            const selectedIds = selectedOptions.map(opt => opt.value);
+            const existingRows = Array.from(tableBody.querySelectorAll("tr"));
+
+            // Remove unselected rows
+            existingRows.forEach(row => {
+                const castingId = row.dataset.castingId;
+                if (!selectedIds.includes(castingId)) {
+                    row.remove();
+                }
+            });
+
+            // Add new rows
+            selectedOptions.forEach(opt => {
+                const id = opt.value;
+                if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
+                    const row = document.createElement("tr");
+                    row.setAttribute("data-casting-id", id);
+                    row.innerHTML = `
+                    <td><input type="text" name="casting_${id}_sno" class="form-control" value="${opt.text}" readonly></td>
+                    <td><input type="number" step="0.01" name="casting_${id}_weight" class="form-control"></td>
+                    <td><input type="number" step="0.01" name="casting_${id}_converted" class="form-control" ></td>
+                    <td><input type="number" step="0.01" name="casting_${id}_wastage_percent" class="form-control"></td>
+                    <td><input type="number" step="0.01" name="casting_${id}_wastage_weight" class="form-control" ></td>
+                    <td>
+                        <input  type="number" step="0.01" name="casting_${id}_total_24k_display" class="form-control" disabled>
+                        <input type="hidden" name="casting_${id}_total_24k">
+                    </td>
+                    <td><input  type="number" step="0.01"  name="casting_${id}_gold_received" class="form-control" ></td>
+                    <td><input  type="number" step="0.01"  name="casting_${id}_service_rate" class="form-control"></td>
+                    <td><input  type="number" step="0.01" name="casting_${id}_service_amount" class="form-control" ></td>
+                    <td><input  type="number" step="0.01"  name="casting_${id}_cash_received" class="form-control" ></td>
+                `;
+                    tableBody.appendChild(row);
+                    bindRowEvents(row);
+                }
+            });
+
+            recalculateAllRows(); // Recalculate after all rows added
+        });
+    </script>
+
 
 
 
