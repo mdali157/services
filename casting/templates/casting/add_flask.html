@@ -154,7 +154,6 @@
             // Set values
             row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
             row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
-            row.querySelector(`[name$="_total_24k_display"]`).value = totalWeight24k.toFixed(2);
             row.querySelector(`[name$="_total_24k"]`).value = totalWeight24k.toFixed(2);
             row.querySelector(`[name$="_gold_received"]`).value = totalWeight24k.toFixed(2);
             row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
@@ -206,10 +205,7 @@
                     <td><input type="number" step="0.01" name="casting_${id}_converted" class="form-control" ></td>
                     <td><input type="number" step="0.01" name="casting_${id}_wastage_percent" class="form-control"></td>
                     <td><input type="number" step="0.01" name="casting_${id}_wastage_weight" class="form-control" ></td>
-                    <td>
-                        <input  type="number" step="0.01" name="casting_${id}_total_24k_display" class="form-control" disabled>
-                        <input type="hidden" name="casting_${id}_total_24k">
-                    </td>
+                    <td><input  type="number" step="0.01" name="casting_${id}_total_24k" class="form-control" readonly></td>
                     <td><input  type="number" step="0.01"  name="casting_${id}_gold_received" class="form-control" ></td>
                     <td><input  type="number" step="0.01"  name="casting_${id}_service_rate" class="form-control"></td>
                     <td><input  type="number" step="0.01" name="casting_${id}_service_amount" class="form-control" ></td>
