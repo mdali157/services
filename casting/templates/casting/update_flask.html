@@ -155,32 +155,42 @@
 
     // Handle select2
     $('.select2').select2().on('change', function () {
-        const tableBody = document.querySelector("#casting-details-table tbody");
-        const selectedIds = Array.from(this.selectedOptions).map(opt => opt.value);
+    const tableBody = document.querySelector("#casting-details-table tbody");
+    const selectedIds = Array.from(this.selectedOptions).map(opt => opt.value);
+    const allRows = tableBody.querySelectorAll('tr');
 
-        selectedIds.forEach(id => {
-            if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
-                const castingNo = this.querySelector(`option[value="${id}"]`).text;
-                const row = document.createElement("tr");
-                row.setAttribute("data-casting-id", id);
-                row.innerHTML = `
-                    <td><input type="text" value="${castingNo}" class="form-control" readonly></td>
-                    <td><input type="text" name="casting_${id}_weight" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_converted" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_wastage_percent" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_wastage_weight" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_total_24k" class="form-control" readonly></td>
-                    <td><input type="text" name="casting_${id}_gold_received" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_service_rate" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_service_amount" class="form-control"></td>
-                    <td><input type="text" name="casting_${id}_cash_received" class="form-control"></td>
-                `;
-                tableBody.appendChild(row);
-                bindRowEvents(row);
-
-            }
-        });
+    // REMOVE rows for unselected new castings (i.e. not existing-row)
+    allRows.forEach(row => {
+        const castingId = row.dataset.castingId;
+        if (!selectedIds.includes(castingId) && !row.classList.contains("existing-row")) {
+            row.remove();
+        }
     });
+
+    // ADD rows for newly selected castings
+    selectedIds.forEach(id => {
+        if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
+            const castingNo = this.querySelector(`option[value="${id}"]`).text;
+            const row = document.createElement("tr");
+            row.setAttribute("data-casting-id", id);
+            row.innerHTML = `
+                <td><input type="text" value="${castingNo}" class="form-control" readonly></td>
+                <td><input type="text" name="casting_${id}_weight" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_converted" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_wastage_percent" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_wastage_weight" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_total_24k" class="form-control" readonly></td>
+                <td><input type="text" name="casting_${id}_gold_received" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_service_rate" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_service_amount" class="form-control"></td>
+                <td><input type="text" name="casting_${id}_cash_received" class="form-control"></td>
+            `;
+            tableBody.appendChild(row);
+            bindRowEvents(row);
+        }
+    });
+});
+
 
     // Bind recalc to existing rows
     document.querySelectorAll('.existing-row').forEach(bindRowEvents);
