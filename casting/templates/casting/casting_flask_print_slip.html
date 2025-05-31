@@ -7,25 +7,45 @@
             font-family: monospace;
             font-size: 14px;
             margin: 0;
-            padding: 10px;
+            padding: 0;
+            width: 78mm;
         }
+
         .slip {
-            width: 280px;
+            width: 100%;
+            padding: 5mm;
+            box-sizing: border-box;
         }
+
         .center {
             text-align: center;
         }
+
         .field-label {
             font-weight: bold;
         }
+
         @media print {
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 78mm;
+                height: auto;
+            }
+
+            .slip {
+                padding: 0;
+                margin: 0;
+                box-sizing: border-box;
+            }
+
             button {
                 display: none;
             }
         }
     </style>
 </head>
-<body onload="window.print()">
+<body onload="delayedPrint()">
     <div class="slip">
         <div class="center">
             <h3>Casting Charges Slip</h3>
@@ -45,5 +65,13 @@
     <div class="center">
         <button onclick="window.print()">Print Again</button>
     </div>
+
+    <script>
+        function delayedPrint() {
+            setTimeout(() => {
+                window.print();
+            }, 300); // slight delay to allow rendering
+        }
+    </script>
 </body>
 </html>

@@ -7,10 +7,13 @@
             font-family: monospace;
             font-size: 14px;
             margin: 0;
-            padding: 10px;
+            padding: 0;
+            width: 78mm;
         }
         .slip {
-            width: 280px;
+            width: 100%;
+            padding: 5mm;
+            box-sizing: border-box;
         }
         .center {
             text-align: center;
@@ -22,7 +25,19 @@
         .field-label {
             font-weight: bold;
         }
+
         @media print {
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 78mm;
+                height: auto;
+            }
+            .slip {
+                padding: 0;
+                margin: 0;
+                box-sizing: border-box;
+            }
             button {
                 display: none;
             }
@@ -30,7 +45,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
-<body onload="window.print()">
+<body onload="renderAndPrint()">
     <div class="slip">
         <div class="center">
             <h3>Casting Slip</h3>
@@ -48,18 +63,25 @@
         </div>
     </div>
 
-    <script>
-        JsBarcode("#barcode", "{{ casting.casting_no }}", {
-            format: "CODE128",
-            displayValue: false,
-            height: 40,
-            width: 1.8,
-            margin: 0
-        });
-    </script>
-
     <div class="center">
         <button onclick="window.print()">Print Again</button>
     </div>
+
+    <script>
+        function renderAndPrint() {
+            JsBarcode("#barcode", "{{ casting.casting_no }}", {
+                format: "CODE128",
+                displayValue: false,
+                height: 40,
+                width: 1.8,
+                margin: 0
+            });
+
+            // Wait briefly to allow barcode to render before printing
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+    </script>
 </body>
 </html>
