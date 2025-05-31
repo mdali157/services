@@ -255,16 +255,28 @@ def add_flask(request):
         'unflasked_castings': unflasked,
     })
 
+
 @login_required
 def update_flask(request, flask_id):
     flask = get_object_or_404(Flask, id=flask_id)
+
+    # 1. All castings already linked to this flask
     existing_castings = Casting.objects.filter(flask=flask)
+
+    # 2. Castings not yet linked to any flask (for the “Add New Castings” select)
     unlinked_castings = Casting.objects.filter(flask__isnull=True)
 
     if request.method == 'POST':
-        # Update flask fields
-        flask.karate = request.POST.get("karate", "").strip()
-        flask.color = request.POST.get("color", "").strip()
+        # a) Normalize & get_or_create Karate and Color
+        karate_value = request.POST.get("karate", "").strip().capitalize()
+        color_value = request.POST.get("color", "").strip().capitalize()
+
+        karate_obj, _ = Karate.objects.get_or_create(name=karate_value)
+        color_obj,  _ = Color.objects.get_or_create(name=color_value)
+
+        # b) Update Flask fields
+        flask.karate = karate_obj.name
+        flask.color = color_obj.name
         flask.input_weight = request.POST.get("input_weight", "")
         flask.output_weight = request.POST.get("output_weight", "")
         flask.machine_wastage = request.POST.get("machine_wastage", "")
@@ -272,7 +284,7 @@ def update_flask(request, flask_id):
         flask.created_at = request.POST.get("creation_date", "")
         flask.save()
 
-        # Update existing casting data
+        # c) Update data for castings already linked
         for casting in existing_castings:
             prefix = f"casting_{casting.id}_"
             casting.weight = request.POST.get(f"{prefix}weight")
@@ -287,9 +299,10 @@ def update_flask(request, flask_id):
             casting.modified_by = request.user
             casting.save()
 
-        # Link new castings
+        # d) Link & initialize data for any newly selected castings
         selected_ids = request.POST.getlist("related_castings")
         for casting_id in selected_ids:
+            # Only link if it wasn't already linked
             if not existing_castings.filter(id=casting_id).exists():
                 casting = get_object_or_404(Casting, id=casting_id)
                 prefix = f"casting_{casting.id}_"
@@ -308,9 +321,9 @@ def update_flask(request, flask_id):
 
         return redirect('casting:all_flask')
 
+    # GET → render template with context
     return render(request, 'casting/update_flask.html', {
         'flask': flask,
         'existing_castings': existing_castings,
         'unlinked_castings': unlinked_castings,
     })
-

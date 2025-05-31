@@ -166,6 +166,7 @@
 
             // 2. Karate autocomplete
             const karateInput = document.getElementById('karate');
+            karateInput.focus()
             const karateSuggestionList = document.getElementById('karate-suggestions');
             karateInput.addEventListener('input', function () {
                 const query = this.value.trim();

@@ -11,31 +11,61 @@
     <div class="container-fluid my-4">
         <h3>Update Flask</h3>
 
+        <!-- Row: Flask No / Karate / Color / Date -->
         <div class="row mb-3">
             <div class="col-md-3">
                 <label class="form-label">Flask No</label>
-                <input type="text" class="form-control" value="{{ flask.id }}" disabled />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Karate</label>
                 <input type="text"
-                       id="karate"
-                       name="karate"
                        class="form-control"
-                       required
-                       value="{{ flask.karate }}" />
+                       value="{{ flask.id }}"
+                       disabled />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Color</label>
-                <input type="text"
-                       id="color"
-                       name="color"
-                       class="form-control"
-                       required
-                       value="{{ flask.color }}" />
+                <div class="form-group">
+                    <label class="form-label" for="karate">Karate</label>
+                    <input type="text"
+                           id="karate"
+                           name="karate"
+                           class="form-control"
+                           required
+                           autocomplete="off"
+                           value="{{ flask.karate }}" />
+                    <ul id="karate-suggestions"
+                        class="suggestions"
+                        style="display: none;
+                               position: absolute;
+                               z-index: 1000;
+                               background: white;
+                               border: 1px solid #ccc;
+                               width: 100%;
+                               max-height: 150px;
+                               overflow-y: auto;"></ul>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Date</label>
+                <div class="form-group">
+                    <label class="form-label" for="color">Color</label>
+                    <input type="text"
+                           id="color"
+                           name="color"
+                           class="form-control"
+                           required
+                           autocomplete="off"
+                           value="{{ flask.color }}" />
+                    <ul id="color-suggestions"
+                        class="suggestions"
+                        style="display: none;
+                               position: absolute;
+                               z-index: 1000;
+                               background: white;
+                               border: 1px solid #ccc;
+                               width: 100%;
+                               max-height: 150px;
+                               overflow-y: auto;"></ul>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="creation_date">Date</label>
                 <input type="date"
                        id="creation_date"
                        name="creation_date"
@@ -45,9 +75,10 @@
             </div>
         </div>
 
+        <!-- Row: Input Weight / Output Weight / Machine Wastage / Production Weight -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <label class="form-label">Input Weight</label>
+                <label class="form-label" for="input_weight">Input Weight</label>
                 <input type="number"
                        step="0.01"
                        id="input_weight"
@@ -57,7 +88,7 @@
                        required />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Output Weight</label>
+                <label class="form-label" for="output_weight">Output Weight</label>
                 <input type="number"
                        step="0.01"
                        id="output_weight"
@@ -67,7 +98,7 @@
                        required />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Machine Wastage</label>
+                <label class="form-label" for="machine_wastage">Machine Wastage</label>
                 <input type="number"
                        step="0.01"
                        id="machine_wastage"
@@ -77,7 +108,7 @@
                        readonly />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Production Weight</label>
+                <label class="form-label" for="production_weight">Production Weight</label>
                 <input type="number"
                        step="0.01"
                        id="production_weight"
@@ -88,9 +119,10 @@
             </div>
         </div>
 
+        <!-- Row: Add New Castings (Select2 multiple) -->
         <div class="row mb-4">
             <div class="col-md-6">
-                <label class="form-label">Add New Castings</label>
+                <label class="form-label" for="related_castings">Add New Castings</label>
                 <select class="form-control select2"
                         id="related_castings"
                         name="related_castings"
@@ -102,6 +134,7 @@
             </div>
         </div>
 
+        <!-- Row: Existing Castings Table -->
         <div class="row mb-4">
             <div class="col-md-12">
                 <h5>Castings</h5>
@@ -200,6 +233,7 @@
             </div>
         </div>
 
+        <!-- Submit Button -->
         <div class="text-end">
             <button type="submit" class="btn btn-primary">
                 <i class="fa fa-save"></i> Update Flask
@@ -211,7 +245,7 @@
 
 {% block scripts %}
 <script>
-    // 1. Calculate machine wastage when input or output weight changes
+    /***** 1. Machine Wastage Calculation *****/
     document.getElementById('input_weight').addEventListener('input', calcWastage);
     document.getElementById('output_weight').addEventListener('input', calcWastage);
 
@@ -222,12 +256,10 @@
     }
 
 
-    // 2. recalculateRow: updates all derived fields when any trigger input changes
+    /***** 2. recalculateRow(row) – update all derived fields for a given row *****/
     function recalculateRow(row) {
-        // Read the current "karate" value (used for converted‐24k calculation)
         const karateVal = parseFloat(document.getElementById('karate').value) || 0;
 
-        // Fetch the three trigger inputs in this row
         const weightInput         = row.querySelector(`[name$="_weight"]`);
         const wastagePercentInput = row.querySelector(`[name$="_wastage_percent"]`);
         const serviceRateInput    = row.querySelector(`[name$="_service_rate"]`);
@@ -236,52 +268,128 @@
         const wastagePercent = parseFloat(wastagePercentInput.value) || 0;
         const serviceRate    = parseFloat(serviceRateInput.value) || 0;
 
-        // Calculate:
-        //  • converted24k = (karate / 24) × weight
-        //  • wastageWeight = (wastagePercent% of converted24k)
-        //  • total24k = converted24k + wastageWeight
-        //  • serviceAmount = serviceRate × weight
-        //  • cashReceived = serviceAmount  (as in add_flask logic)
+        // Perform calculations
         const converted24k  = (karateVal / 24) * weight;
         const wastageWeight = (wastagePercent * converted24k) / 100;
         const total24k      = converted24k + wastageWeight;
         const serviceAmount = serviceRate * weight;
         const cashReceived  = serviceAmount;
 
-        // Write results back into each field
-        row.querySelector(`[name$="_converted"]`).value       = converted24k.toFixed(2);
-        row.querySelector(`[name$="_wastage_weight"]`).value  = wastageWeight.toFixed(2);
-        row.querySelector(`[name$="_total_24k"]`).value       = total24k.toFixed(2);
-        row.querySelector(`[name$="_gold_received"]`).value   = total24k.toFixed(2);
-        row.querySelector(`[name$="_service_amount"]`).value  = serviceAmount.toFixed(2);
-        row.querySelector(`[name$="_cash_received"]`).value   = cashReceived.toFixed(2);
+        // Update fields in the row
+        row.querySelector(`[name$="_converted"]`).value      = converted24k.toFixed(2);
+        row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
+        row.querySelector(`[name$="_total_24k"]`).value      = total24k.toFixed(2);
+        row.querySelector(`[name$="_gold_received"]`).value  = total24k.toFixed(2);
+        row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
+        row.querySelector(`[name$="_cash_received"]`).value  = cashReceived.toFixed(2);
     }
 
-    // 3. bindRowEvents: attach listeners only to the three "trigger" inputs in a row
+    /***** 3. bindRowEvents(row) – listen only on weight/wastage%/service inputs *****/
     function bindRowEvents(row) {
         const weightInput         = row.querySelector(`[name$="_weight"]`);
         const wastagePercentInput = row.querySelector(`[name$="_wastage_percent"]`);
         const serviceRateInput    = row.querySelector(`[name$="_service_rate"]`);
 
-        // Whenever weight, wastage %, or service rate changes → recalcRow
         [weightInput, wastagePercentInput, serviceRateInput].forEach(input => {
             input.addEventListener('input', () => recalculateRow(row));
         });
     }
 
-    // 4. When karate changes, recalc all existing rows
+    /***** 4. When #karate changes, recalc ALL existing rows *****/
     document.getElementById('karate').addEventListener('input', () => {
         document.querySelectorAll('#casting-details-table tbody tr')
                 .forEach(row => recalculateRow(row));
     });
 
 
-    // 5. Initialize Select2 and handle "Add New Castings" just like add_flask.html
+    /***** 5. Autocomplete for Karate & Color in Update Flask *****/
+    document.addEventListener('DOMContentLoaded', () => {
+        const karateInput = document.getElementById('karate');
+        karateInput.focus();
+        const karateSuggestionList = document.getElementById('karate-suggestions');
+
+        karateInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            if (query.length > 0) {
+                fetch(`/casting/search/karate/?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const suggestions = data.suggestions || [];
+                        karateSuggestionList.innerHTML = '';
+                        if (suggestions.length) {
+                            suggestions.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item.name;
+                                li.style.cursor = 'pointer';
+                                li.style.padding = '4px';
+                                li.addEventListener('click', () => {
+                                    karateInput.value = item.name;
+                                    karateSuggestionList.style.display = 'none';
+                                });
+                                karateSuggestionList.appendChild(li);
+                            });
+                            karateSuggestionList.style.display = 'block';
+                        } else {
+                            karateSuggestionList.style.display = 'none';
+                        }
+                    });
+            } else {
+                karateSuggestionList.style.display = 'none';
+                karateSuggestionList.innerHTML = '';
+            }
+        });
+
+        const colorInput = document.getElementById('color');
+        const colorSuggestionList = document.getElementById('color-suggestions');
+
+        colorInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            if (query.length > 1) {
+                fetch(`/casting/search/color/?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const suggestions = data.suggestions || [];
+                        colorSuggestionList.innerHTML = '';
+                        if (suggestions.length) {
+                            suggestions.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item.name;
+                                li.style.cursor = 'pointer';
+                                li.style.padding = '4px';
+                                li.addEventListener('click', () => {
+                                    colorInput.value = item.name;
+                                    colorSuggestionList.style.display = 'none';
+                                });
+                                colorSuggestionList.appendChild(li);
+                            });
+                            colorSuggestionList.style.display = 'block';
+                        } else {
+                            colorSuggestionList.style.display = 'none';
+                        }
+                    });
+            } else {
+                colorSuggestionList.style.display = 'none';
+                colorSuggestionList.innerHTML = '';
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!karateInput.contains(e.target) && !karateSuggestionList.contains(e.target)) {
+                karateSuggestionList.style.display = 'none';
+            }
+            if (!colorInput.contains(e.target) && !colorSuggestionList.contains(e.target)) {
+                colorSuggestionList.style.display = 'none';
+            }
+        });
+    });
+
+
+    /***** 6. Initialize Select2 & Handle New Castings *****/
     $('.select2').select2().on('change', function () {
         const tableBody   = document.querySelector("#casting-details-table tbody");
         const selectedIds = Array.from(this.selectedOptions).map(opt => opt.value);
 
-        // 5a. Remove any newly‐added row that is no longer selected
+        // 6a. Remove any new row that is no longer selected
         Array.from(tableBody.querySelectorAll("tr:not(.existing-row)")).forEach(row => {
             const castingId = row.dataset.castingId;
             if (!selectedIds.includes(castingId)) {
@@ -289,14 +397,13 @@
             }
         });
 
-        // 5b. Add any newly‐selected casting that isn't already in the table
+        // 6b. Add any newly selected casting that isn’t already in the table
         selectedIds.forEach(id => {
             if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
                 const castingNo = this.querySelector(`option[value="${id}"]`).text;
-                const row       = document.createElement("tr");
+                const row = document.createElement("tr");
                 row.setAttribute("data-casting-id", id);
 
-                // Build the same HTML as in add_flask.html for a new row
                 row.innerHTML = `
                     <td>
                         <input type="text"
@@ -363,15 +470,13 @@
                 `;
                 tableBody.appendChild(row);
 
-                // Bind recalc listeners just like an existing row
                 bindRowEvents(row);
-                recalculateRow(row); // initialize its calculated values
+                recalculateRow(row);
             }
         });
     });
 
-
-    // 6. On page load, bind recalc to each existing row
+    /***** 7. On Page Load, bind recalc to each existing row *****/
     document.querySelectorAll('.existing-row').forEach(row => {
         bindRowEvents(row);
     });
