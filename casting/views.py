@@ -193,32 +193,46 @@ def all_casting(request):
 
 @login_required
 def add_flask(request):
+    # 1. Determine next_flask_id (just max ID + 1)
     next_id = (Flask.objects.aggregate(Max('id'))['id__max'] or 0) + 1
+
+    # 2. Fetch all castings not yet assigned to a flask
     unflasked = Casting.objects.filter(flask__isnull=True)
 
     if request.method == 'POST':
-        # 1. Create Flask
+        # 3. Extract and normalize karate & color strings
+        karate_value = request.POST.get("karate", "").strip().capitalize()
+        color_value = request.POST.get("color", "").strip().capitalize()
+
+        # 4. Get or create the Karate and Color objects
+        karate_obj, _ = Karate.objects.get_or_create(name=karate_value)
+        color_obj, _ = Color.objects.get_or_create(name=color_value)
+
+        # 5. Create the Flask instance (saving karate_obj.name & color_obj.name, to mirror how Casting saved them)
         flask = Flask.objects.create(
-            karate=request.POST.get("karate", "").strip(),
-            color=request.POST.get("color", "").strip(),
+            karate=karate_obj.name,
+            color=color_obj.name,
             input_weight=request.POST.get("input_weight", ""),
             output_weight=request.POST.get("output_weight", ""),
             machine_wastage=request.POST.get("machine_wastage", ""),
             production_weight=request.POST.get("production_weight", ""),
             created_at=request.POST.get("creation_date", ""),
+            # If your Flask model instead has FK fields for karate & color:
+            # karate=karate_obj,
+            # color=color_obj,
         )
 
-        # 2. Loop through selected castings and update each
+        # 6. Loop through POST keys to find all selected castings (those ending with "_sno")
         for key in request.POST:
             if key.startswith("casting_") and key.endswith("_sno"):
-                base = key.replace("_sno", "")  # casting_12
-                casting_sno = base.split("_")[1]
+                base = key.replace("_sno", "")  # e.g. "casting_12"
+                casting_id = base.split("_")[1]
                 try:
-                    casting = Casting.objects.get(id=casting_sno)
+                    casting = Casting.objects.get(id=casting_id)
                 except Casting.DoesNotExist:
                     continue
 
-                # Update casting fields
+                # 7. Update each Casting’s fields
                 casting.weight = request.POST.get(f"{base}_weight")
                 casting.converted24k = request.POST.get(f"{base}_converted")
                 casting.wastage_percentage = request.POST.get(f"{base}_wastage_percent")
@@ -232,8 +246,10 @@ def add_flask(request):
                 casting.modified_by = request.user
                 casting.save()
 
+        # 8. Redirect back to the “all_flask” page
         return redirect('casting:all_flask')
 
+    # For GET requests, render the form with next_flask_id & unflasked_castings
     return render(request, 'casting/add_flask.html', {
         'next_flask_id': next_id,
         'unflasked_castings': unflasked,
