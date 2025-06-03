@@ -337,25 +337,20 @@ def update_flask(request, flask_id):
 
 
 def report(request):
-    """
-    Handles both GET (render the filter form) and POST (generate PDF inline or
-    Excel download).
-    """
     service_type_list = ServiceType.objects.all()
     customers = Customer.objects.all()
 
     if request.method == "POST":
         # 1) Read form fields
-        report_for = request.POST.get("report_for")           # "Services" or "Casting"
-        from_date_str = request.POST.get("from_date")         # e.g. "2025-05-01"
-        to_date_str = request.POST.get("to_date")             # e.g. "2025-05-31"
-        report_type = request.POST.get("report_type")         # "Summary" or "Detail"
-        selected_customers = request.POST.getlist("customers")  # list of customer IDs (strings)
-        selected_service_type = request.POST.get("service_type")  # e.g. "Gold Plating" or "All"
-        action = request.POST.get("action")                   # "pdf" or "excel"
+        report_for = request.POST.get("report_for")
+        from_date_str = request.POST.get("from_date")
+        to_date_str = request.POST.get("to_date")
+        report_type = request.POST.get("report_type")
+        selected_customers = request.POST.getlist("customers")
+        selected_service_type = request.POST.get("service_type")
+        action = request.POST.get("action")
 
         # 2) Parse dates into date objects
-        #    (Use .strptime to get naive dates, then attach UTC or local if needed)
         from_date = datetime.datetime.strptime(from_date_str, "%Y-%m-%d").date()
         to_date = datetime.datetime.strptime(to_date_str, "%Y-%m-%d").date()
 
@@ -400,11 +395,6 @@ def report(request):
 
 
 def generate_pdf_response(request, queryset, report_for, report_type, from_date, to_date):
-    """
-    Renders the `report_pdf.html` template into a PDF (xhtml2pdf) and returns
-    it inline (Content-Disposition: inline).
-    """
-    # 1) Build context for the PDF template
     context = {
         "report_for": report_for,
         "report_type": report_type,
@@ -413,17 +403,14 @@ def generate_pdf_response(request, queryset, report_for, report_type, from_date,
         "items": queryset,  # Receivings or Castings
     }
 
-    # 2) Load and render the HTML template
     template = get_template("casting/report_pdf.html")
     html = template.render(context)
 
-    # 3) Create a bytes buffer, write PDF into it
     result = io.BytesIO()
     pisa_status = pisa.CreatePDF(html, dest=result)
     if pisa_status.err:
         return HttpResponse("Error generating PDF", status=500)
 
-    # 4) Return the PDF with inline disposition
     result.seek(0)
     response = HttpResponse(result.read(), content_type="application/pdf")
     response["Content-Disposition"] = 'inline; filename="report.pdf"'
@@ -431,15 +418,9 @@ def generate_pdf_response(request, queryset, report_for, report_type, from_date,
 
 
 def generate_excel_response(queryset, report_for, report_type, from_date, to_date):
-    """
-    Builds an openpyxl Workbook in-memory, writes headers + rows depending on
-    `report_for` and `report_type`, and returns an HttpResponse that forces
-    download (Content-Disposition: attachment).
-    """
     wb = openpyxl.Workbook()
     ws = wb.active
 
-    # 1) Build column headers depending on report_for and report_type
     if report_for == "Services":
         if report_type == "Detail":
             headers = [
@@ -479,11 +460,9 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                 "Received Amount",
             ]
 
-    # 2) Write the header row
     for col_idx, column_title in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col_idx)
         cell.value = column_title
-        # (Optional) enlarge column width a bit:
         ws.column_dimensions[get_column_letter(col_idx)].width = max(len(column_title) * 1.2, 15)
 
     # 3) Write each row
@@ -554,7 +533,6 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
 
         row_num += 1
 
-    # 4) Stream the workbook to an in-memory buffer
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
