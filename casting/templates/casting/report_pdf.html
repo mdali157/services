@@ -1,0 +1,167 @@
+{# casting/templates/casting/report_pdf.html #}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 5px;
+        }
+
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #444;
+            padding: 2px;
+            text-align: center;
+            word-wrap: break-word;
+            white-space: nowrap;
+            margin: 2px;
+        }
+
+        h2, h3 {
+            font-family: DejaVu Sans, sans-serif;
+            margin-bottom: 0;
+        }
+
+        .header {
+            margin-bottom: 10px;
+        }
+    </style>
+
+</head>
+<body>
+<div class="header">
+    <h2>Report: {{ report_for }} - {{ report_type }}</h2>
+    <h3>From {{ from_date }} to {{ to_date }}</h3>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        {% if report_for == "Services" %}
+            {% if report_type == "Detail" %}
+                <th>Service #</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Customer Name</th>
+                <th>Mobile #</th>
+                <th>Work Description</th>
+                <th>Estimate</th>
+                <th>Amount</th>
+                <th>Remarks</th>
+            {% else %}
+                {# Summary #}
+                <th>Date</th>
+                <th>Type</th>
+                <th>Estimate</th>
+                <th>Amount</th>
+            {% endif %}
+        {% else %}
+            {# report_for == "Casting" #}
+            {% if report_type == "Detail" %}
+                <th>Flask #</th>
+                <th>Date</th>
+                <th>Karate</th>
+                <th>Color</th>
+                <th>Mach-Wast</th>
+                <th>Cast #</th>
+                <th>Party Name</th>
+                <th>Prd-Wt</th>
+                <th>WT-24K</th>
+                <th>Wast %</th>
+                <th>Wast-WT</th>
+                <th>Total Wt</th>
+                <th>Gold-Rec</th>
+                <th>Rate</th>
+                <th>Amount</th>
+                <th>Rec-Amt</th>
+                <th>Remarks</th>
+            {% else %}
+                {# Summary #}
+                <th>Date</th>
+                <th>Input WT</th>
+                <th>Output WT</th>
+                <th>Machine Wastage</th>
+                <th>Production Weight</th>
+                <th>Weight-24K</th>
+                <th>Wastage Wt</th>
+                <th>Total Wt</th>
+                <th>Gold Received</th>
+                <th>Service Amount</th>
+                <th>Received Amount</th>
+            {% endif %}
+        {% endif %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for obj in items %}
+        <tr>
+            {% if report_for == "Services" %}
+                {% if report_type == "Detail" %}
+                    <td>{{ obj.service_no }}</td>
+                    <td>{{ obj.created_at }}</td>
+                    <td>{{ obj.service_type }}</td>
+                    <td>{{ obj.customer.name }}</td>
+                    <td>{{ obj.customer.phone_number }}</td>
+                    <td>{{ obj.description }}</td>
+                    <td>{{ obj.estimated_price|default_if_none:"" }}</td>
+                    <td>{{ obj.actual_price|default_if_none:"" }}</td>
+                    <td>{{ obj.remarks|default_if_none:"" }}</td>
+                {% else %}
+                    <td>{{ obj.created_at }}</td>
+                    <td>{{ obj.service_type }}</td>
+                    <td>{{ obj.estimated_price|default_if_none:"" }}</td>
+                    <td>{{ obj.actual_price|default_if_none:"" }}</td>
+                {% endif %}
+            {% else %}
+                {% if report_type == "Detail" %}
+                    <td>{{ obj.flask.id }}</td>
+                    <td>{{ obj.created_at|date:"Y-m-d" }}</td>
+                    <td>{{ obj.karate }}</td>
+                    <td>{{ obj.color }}</td>
+                    <td>{{ obj.flask.machine_wastage }}</td>
+                    <td>{{ obj.casting_no }}</td>
+                    <td>{{ obj.customer.name }}</td>
+                    <td>{{ obj.flask.production_weight }}</td>
+                    <td>{{ obj.total_weight24k }}</td>
+                    <td>{{ obj.wastage_percentage }}</td>
+                    <td>{{ obj.wastage_weight }}</td>
+                    <td>{{ obj.total_weight24k }}</td>
+                    <td>{{ obj.gold_received }}</td>
+                    <td>{{ obj.service_charges_rate }}</td>
+                    <td>{{ obj.service_charges_amount }}</td>
+                    <td>{{ obj.cash_received }}</td>
+                    <td>{{ obj.remarks }}</td>
+                {% else %}
+                    <td>{{ obj.created_at|date:"Y-m-d" }}</td>
+                    <td>{{ obj.flask.input_weight }}</td>
+                    <td>{{ obj.flask.output_weight }}</td>
+                    <td>{{ obj.flask.machine_wastage }}</td>
+                    <td>{{ obj.flask.production_weight }}</td>
+                    <td>{{ obj.total_weight24k }}</td>
+                    <td>{{ obj.wastage_weight }}</td>
+                    <td>{{ obj.total_weight24k }}</td>
+                    <td>{{ obj.gold_received }}</td>
+                    <td>{{ obj.service_charges_amount }}</td>
+                    <td>{{ obj.cash_received }}</td>
+                {% endif %}
+            {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

@@ -1,14 +1,22 @@
 import base64
+import datetime
+import io
 import uuid
 from io import BytesIO
 
+import openpyxl
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Max
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.template.loader import get_template
 from django.urls import reverse
+from openpyxl.utils import get_column_letter
+from xhtml2pdf import pisa
+
 from customers.models import Customer
+from receiving.models import ServiceType, Receiving
 
 from .models import *
 
@@ -100,7 +108,6 @@ def update_casting(request, casting_id):
         captured_image_data = request.POST.get("captured_image")  # data:image/png;base64,…
         is_delivered = request.POST.get('is_delivered')
 
-
         karate_obj, _ = Karate.objects.get_or_create(name=karate_value)
         color_obj, _ = Color.objects.get_or_create(name=color_value)
 
@@ -135,6 +142,7 @@ def update_casting(request, casting_id):
     return render(request, 'casting/update_casting.html', {
         'casting': casting
     })
+
 
 def search_karate(request):
     query = request.GET.get('q', '')
@@ -182,8 +190,6 @@ def all_casting(request):
         all_casting = Casting.objects.filter(is_delivered=False)
     else:  # 'all'
         all_casting = Casting.objects.all()
-
-
 
     return render(request, 'casting/all_casting.html', {
         'castings_with_flask': all_casting,
@@ -272,7 +278,7 @@ def update_flask(request, flask_id):
         color_value = request.POST.get("color", "").strip().capitalize()
 
         karate_obj, _ = Karate.objects.get_or_create(name=karate_value)
-        color_obj,  _ = Color.objects.get_or_create(name=color_value)
+        color_obj, _ = Color.objects.get_or_create(name=color_value)
 
         # b) Update Flask fields
         flask.karate = karate_obj.name
@@ -327,3 +333,236 @@ def update_flask(request, flask_id):
         'existing_castings': existing_castings,
         'unlinked_castings': unlinked_castings,
     })
+
+
+
+def report(request):
+    """
+    Handles both GET (render the filter form) and POST (generate PDF inline or
+    Excel download).
+    """
+    service_type_list = ServiceType.objects.all()
+    customers = Customer.objects.all()
+
+    if request.method == "POST":
+        # 1) Read form fields
+        report_for = request.POST.get("report_for")           # "Services" or "Casting"
+        from_date_str = request.POST.get("from_date")         # e.g. "2025-05-01"
+        to_date_str = request.POST.get("to_date")             # e.g. "2025-05-31"
+        report_type = request.POST.get("report_type")         # "Summary" or "Detail"
+        selected_customers = request.POST.getlist("customers")  # list of customer IDs (strings)
+        selected_service_type = request.POST.get("service_type")  # e.g. "Gold Plating" or "All"
+        action = request.POST.get("action")                   # "pdf" or "excel"
+
+        # 2) Parse dates into date objects
+        #    (Use .strptime to get naive dates, then attach UTC or local if needed)
+        from_date = datetime.datetime.strptime(from_date_str, "%Y-%m-%d").date()
+        to_date = datetime.datetime.strptime(to_date_str, "%Y-%m-%d").date()
+
+        # 3) Build queryset depending on `report_for`
+        if report_for == "Services":
+            qs = Receiving.objects.filter(created_at__range=(from_date, to_date))
+            if selected_customers:
+                qs = qs.filter(customer__id__in=selected_customers)
+            if selected_service_type and selected_service_type != "All":
+                qs = qs.filter(service_type=selected_service_type)
+
+        else:  # report_for == "Casting"
+            qs = Casting.objects.filter(created_at__range=(from_date, to_date))
+            if selected_customers:
+                qs = qs.filter(customer__id__in=selected_customers)
+
+        # 4) Branch on action
+        if action == "pdf":
+            return generate_pdf_response(
+                request=request,
+                queryset=qs,
+                report_for=report_for,
+                report_type=report_type,
+                from_date=from_date,
+                to_date=to_date,
+            )
+        else:  # action == "excel"
+            return generate_excel_response(
+                queryset=qs,
+                report_for=report_for,
+                report_type=report_type,
+                from_date=from_date,
+                to_date=to_date,
+            )
+
+    # If GET, just render the filter form
+    return render(
+        request,
+        "casting/reports.html",
+        {"service_type": service_type_list, "customers": customers},
+    )
+
+
+def generate_pdf_response(request, queryset, report_for, report_type, from_date, to_date):
+    """
+    Renders the `report_pdf.html` template into a PDF (xhtml2pdf) and returns
+    it inline (Content-Disposition: inline).
+    """
+    # 1) Build context for the PDF template
+    context = {
+        "report_for": report_for,
+        "report_type": report_type,
+        "from_date": from_date,
+        "to_date": to_date,
+        "items": queryset,  # Receivings or Castings
+    }
+
+    # 2) Load and render the HTML template
+    template = get_template("casting/report_pdf.html")
+    html = template.render(context)
+
+    # 3) Create a bytes buffer, write PDF into it
+    result = io.BytesIO()
+    pisa_status = pisa.CreatePDF(html, dest=result)
+    if pisa_status.err:
+        return HttpResponse("Error generating PDF", status=500)
+
+    # 4) Return the PDF with inline disposition
+    result.seek(0)
+    response = HttpResponse(result.read(), content_type="application/pdf")
+    response["Content-Disposition"] = 'inline; filename="report.pdf"'
+    return response
+
+
+def generate_excel_response(queryset, report_for, report_type, from_date, to_date):
+    """
+    Builds an openpyxl Workbook in-memory, writes headers + rows depending on
+    `report_for` and `report_type`, and returns an HttpResponse that forces
+    download (Content-Disposition: attachment).
+    """
+    wb = openpyxl.Workbook()
+    ws = wb.active
+
+    # 1) Build column headers depending on report_for and report_type
+    if report_for == "Services":
+        if report_type == "Detail":
+            headers = [
+                "Service #",
+                "Date",
+                "Type",
+                "Customer Name",
+                "Mobile #",
+                "Work Description",
+                "Estimate",
+                "Amount",
+                "Remarks",
+            ]
+        else:  # Summary
+            headers = ["Date", "Type", "Estimate", "Amount"]
+    else:  # report_for == "Casting"
+        if report_type == "Detail":
+            headers = [
+                "Flask #", "Date", "Karate", "Color", "Input WT", "Output WT", "Machine Wastage",
+                "Cast #", "Party Name", "Production Weight", "Weight-24K", "Wastage %",
+                "Wastage Wt", "Total Wt", "Gold Received", "Service Charges Rate", "Amount",
+                "Received Amount", "Remarks"
+            ]
+
+        else:  # Summary
+            headers = [
+                "Date",
+                "Input WT",
+                "Output WT",
+                "Machine Wastage",
+                "Production Weight",
+                "Weight-24K",
+                "Wastage Wt",
+                "Total Wt",
+                "Gold Received",
+                "Service Amount",
+                "Received Amount",
+            ]
+
+    # 2) Write the header row
+    for col_idx, column_title in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.value = column_title
+        # (Optional) enlarge column width a bit:
+        ws.column_dimensions[get_column_letter(col_idx)].width = max(len(column_title) * 1.2, 15)
+
+    # 3) Write each row
+    row_num = 2
+    for obj in queryset:
+        row = []
+        if report_for == "Services":
+            if report_type == "Detail":
+                row = [
+                    obj.service_no,
+                    obj.created_at.strftime("%Y-%m-%d"),
+                    obj.service_type,
+                    obj.customer.name,
+                    obj.customer.phone_number,
+                    obj.description,
+                    obj.estimated_price or "",
+                    obj.actual_price or "",
+                    obj.remarks or "",
+                ]
+            else:  # Summary
+                row = [
+                    obj.created_at.strftime("%Y-%m-%d"),
+                    obj.service_type,
+                    obj.estimated_price or "",
+                    obj.actual_price or "",
+                ]
+        else:  # report_for == "Casting"
+            if report_type == "Detail":
+                row = [
+                    obj.flask.id if obj.flask else "",
+                    obj.created_at.strftime("%Y-%m-%d"),
+                    obj.karate or "",
+                    obj.color or "",
+                    obj.flask.input_weight if obj.flask else "",
+                    obj.flask.output_weight if obj.flask else "",
+                    obj.flask.machine_wastage if obj.flask else "",
+                    obj.casting_no,
+                    obj.customer.name if obj.customer.name else "",
+                    obj.flask.production_weight if obj.flask else "",
+                    obj.total_weight24k or "",
+                    obj.wastage_percentage or "",
+                    obj.wastage_weight or "",
+                    obj.total_weight24k or "",
+                    obj.gold_received or "",
+                    obj.service_charges_rate or "",
+                    obj.service_charges_amount or "",
+                    obj.cash_received or "",
+                    obj.remarks if obj.remarks else "",
+                ]
+
+            else:  # Summary
+                row = [
+                    obj.created_at.strftime("%Y-%m-%d"),
+                    obj.flask.input_weight if obj.flask else "",
+                    obj.flask.output_weight if obj.flask else "",
+                    obj.flask.machine_wastage if obj.flask else "",
+                    obj.flask.production_weight if obj.flask else "",
+                    obj.total_weight24k or "",
+                    obj.wastage_weight or "",
+                    obj.total_weight24k or "",
+                    obj.gold_received or "",
+                    obj.service_charges_amount or "",
+                    obj.cash_received or "",
+                ]
+
+        for col_idx, cell_value in enumerate(row, 1):
+            ws.cell(row=row_num, column=col_idx).value = cell_value
+
+        row_num += 1
+
+    # 4) Stream the workbook to an in-memory buffer
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"{report_for.lower()}_{report_type.lower()}_{from_date}_{to_date}.xlsx"
+    response = HttpResponse(
+        output.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

@@ -1,0 +1,103 @@
+{# casting/reports.html #}
+{% extends 'base_template.html' %}
+{% load static %}
+
+{% block head %}
+<link href="{% static 'css/receiving-styles.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block content %}
+<form id="report-form" method="post" action="">
+    {% csrf_token %}
+    <div class="container-fluid my-4">
+        <h3>Generate Report</h3>
+
+        <!-- Row: Report For -->
+        <div class="row mb-3">
+            <div class="col-md">
+                <label for="report_for" class="form-label">Report For</label>
+                <select id="report_for" name="report_for" class="form-control" required>
+                    <option value="Services">Services</option>
+                    <option value="Casting">Casting</option>
+                </select>
+            </div>
+            <div class="col-md">
+                <label for="from_date" class="form-label">From Date</label>
+                <input type="date" id="from_date" name="from_date" class="form-control" required>
+            </div>
+            <div class="col-md">
+                <label for="to_date" class="form-label">To Date</label>
+                <input type="date" id="to_date" name="to_date" class="form-control" required>
+            </div>
+            <div class="col-md">
+                <label for="report_type" class="form-label">Report Type</label>
+                <select id="report_type" name="report_type" class="form-control" required>
+                    <option value="Summary">Summary</option>
+                    <option value="Detail">Detail</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Row: Select Customer + (Service Type if Services) -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="customers" class="form-label">Select Customer</label>
+                <select id="customers" name="customers" class="form-control select2" multiple>
+                    {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.name }} – {{ customer.phone_number }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3" id="service-type-row" style="display: none;">
+                <label for="service_type" class="form-label">Service Type</label>
+                <select id="service_type" name="service_type" class="form-control">
+                    <option value="All">All</option>
+                    {% for s in service_type %}
+                        <option value="{{ s.name }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Buttons: Print PDF / Export Excel -->
+        <div class="row">
+            <div class="col-md-12 text-end">
+                <button type="submit" name="action" value="pdf" class="btn btn-primary me-2">
+                    Print PDF
+                </button>
+                <button type="submit" name="action" value="excel" class="btn btn-secondary">
+                    Export Excel
+                </button>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const reportForSelect = document.getElementById('report_for');
+        const serviceTypeRow = document.getElementById('service-type-row');
+
+        function toggleServiceType() {
+            if (reportForSelect.value === 'Services') {
+                serviceTypeRow.style.display = 'block';
+            } else {
+                serviceTypeRow.style.display = 'none';
+                document.getElementById('service_type').value = 'All';
+            }
+        }
+
+        toggleServiceType();
+        reportForSelect.addEventListener('change', toggleServiceType);
+
+        // Initialize Select2 for customer multiselect
+        $('.select2').select2();
+    });
+</script>
+{% endblock %}
