@@ -1,5 +1,3 @@
-{# casting/templates/casting/report_pdf.html #}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,34 +61,33 @@
                 <th>Amount</th>
                 <th>Remarks</th>
             {% else %}
-                {# Summary #}
                 <th>Date</th>
                 <th>Type</th>
                 <th>Estimate</th>
                 <th>Amount</th>
             {% endif %}
         {% else %}
-            {# report_for == "Casting" #}
             {% if report_type == "Detail" %}
                 <th>Flask #</th>
                 <th>Date</th>
                 <th>Karate</th>
                 <th>Color</th>
-                <th>Mach-Wast</th>
+                <th>Input WT</th>
+                <th>Output WT</th>
+                <th>Machine Wastage</th>
                 <th>Cast #</th>
                 <th>Party Name</th>
-                <th>Prd-Wt</th>
-                <th>WT-24K</th>
-                <th>Wast %</th>
-                <th>Wast-WT</th>
+                <th>Production Weight</th>
+                <th>Weight-24K</th>
+                <th>Wastage %</th>
+                <th>Wastage Wt</th>
                 <th>Total Wt</th>
-                <th>Gold-Rec</th>
-                <th>Rate</th>
+                <th>Gold Received</th>
+                <th>Service Charges Rate</th>
                 <th>Amount</th>
-                <th>Rec-Amt</th>
+                <th>Received Amount</th>
                 <th>Remarks</th>
             {% else %}
-                {# Summary #}
                 <th>Date</th>
                 <th>Input WT</th>
                 <th>Output WT</th>
@@ -123,8 +120,8 @@
                 {% else %}
                     <td>{{ obj.created_at }}</td>
                     <td>{{ obj.service_type }}</td>
-                    <td>{{ obj.estimated_price|default_if_none:"" }}</td>
-                    <td>{{ obj.actual_price|default_if_none:"" }}</td>
+                    <td>{{ obj.total_estimate|default_if_none:"" }}</td>
+                    <td>{{ obj.total_amount|default_if_none:"" }}</td>
                 {% endif %}
             {% else %}
                 {% if report_type == "Detail" %}
@@ -132,6 +129,8 @@
                     <td>{{ obj.created_at|date:"Y-m-d" }}</td>
                     <td>{{ obj.karate }}</td>
                     <td>{{ obj.color }}</td>
+                    <td>{{ obj.flask.input_weight }}</td>
+                    <td>{{ obj.flask.output_weight }}</td>
                     <td>{{ obj.flask.machine_wastage }}</td>
                     <td>{{ obj.casting_no }}</td>
                     <td>{{ obj.customer.name }}</td>
@@ -147,16 +146,16 @@
                     <td>{{ obj.remarks }}</td>
                 {% else %}
                     <td>{{ obj.created_at|date:"Y-m-d" }}</td>
-                    <td>{{ obj.flask.input_weight }}</td>
-                    <td>{{ obj.flask.output_weight }}</td>
-                    <td>{{ obj.flask.machine_wastage }}</td>
-                    <td>{{ obj.flask.production_weight }}</td>
+                    <td>{{ obj.total_input_weight }}</td>
+                    <td>{{ obj.total_output_weight }}</td>
+                    <td>{{ obj.total_machine_wastage }}</td>
+                    <td>{{ obj.total_production_weight }}</td>
                     <td>{{ obj.total_weight24k }}</td>
-                    <td>{{ obj.wastage_weight }}</td>
+                    <td>{{ obj.total_wastage_weight }}</td>
                     <td>{{ obj.total_weight24k }}</td>
-                    <td>{{ obj.gold_received }}</td>
-                    <td>{{ obj.service_charges_amount }}</td>
-                    <td>{{ obj.cash_received }}</td>
+                    <td>{{ obj.total_gold_received }}</td>
+                    <td>{{ obj.total_service_charges_amount }}</td>
+                    <td>{{ obj.total_cash_received }}</td>
                 {% endif %}
             {% endif %}
         </tr>

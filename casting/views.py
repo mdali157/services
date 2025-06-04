@@ -6,7 +6,7 @@ from io import BytesIO
 
 import openpyxl
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db.models import Max
+from django.db.models import Max, Sum
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -335,7 +335,6 @@ def update_flask(request, flask_id):
     })
 
 
-
 def report(request):
     service_type_list = ServiceType.objects.all()
     customers = Customer.objects.all()
@@ -356,16 +355,49 @@ def report(request):
 
         # 3) Build queryset depending on `report_for`
         if report_for == "Services":
-            qs = Receiving.objects.filter(created_at__range=(from_date, to_date))
-            if selected_customers:
-                qs = qs.filter(customer__id__in=selected_customers)
-            if selected_service_type and selected_service_type != "All":
-                qs = qs.filter(service_type=selected_service_type)
+            if report_type == "Summary":
+                qs = Receiving.objects.filter(created_at__range=(from_date, to_date))
+                if selected_customers:
+                    qs = qs.filter(customer__id__in=selected_customers)
+                if selected_service_type and selected_service_type != "All":
+                    qs = qs.filter(service_type=selected_service_type)
+
+                # Group by date and service type, and sum Estimate and Amount
+                qs = qs.values('created_at', 'service_type') \
+                    .annotate(
+                    total_estimate=Sum('estimated_price'),
+                    total_amount=Sum('actual_price')
+                ).order_by('created_at', 'service_type')
+            else:  # Detail
+                qs = Receiving.objects.filter(created_at__range=(from_date, to_date))
+                if selected_customers:
+                    qs = qs.filter(customer__id__in=selected_customers)
+                if selected_service_type and selected_service_type != "All":
+                    qs = qs.filter(service_type=selected_service_type)
 
         else:  # report_for == "Casting"
-            qs = Casting.objects.filter(created_at__range=(from_date, to_date))
-            if selected_customers:
-                qs = qs.filter(customer__id__in=selected_customers)
+            if report_type == "Summary":
+                qs = Casting.objects.filter(created_at__range=(from_date, to_date))
+                if selected_customers:
+                    qs = qs.filter(customer__id__in=selected_customers)
+
+                # Group by date and sum other fields
+                qs = qs.values('created_at') \
+                    .annotate(
+                    total_input_weight=Sum('flask__input_weight'),
+                    total_output_weight=Sum('flask__output_weight'),
+                    total_machine_wastage=Sum('flask__machine_wastage'),
+                    total_production_weight=Sum('flask__production_weight'),
+                    total_weight24k=Sum('total_weight24k'),
+                    total_wastage_weight=Sum('wastage_weight'),
+                    total_gold_received=Sum('gold_received'),
+                    total_service_charges_amount=Sum('service_charges_amount'),
+                    total_cash_received=Sum('cash_received')
+                ).order_by('created_at')
+            else:  # Detail
+                qs = Casting.objects.filter(created_at__range=(from_date, to_date))
+                if selected_customers:
+                    qs = qs.filter(customer__id__in=selected_customers)
 
         # 4) Branch on action
         if action == "pdf":
@@ -444,7 +476,6 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                 "Wastage Wt", "Total Wt", "Gold Received", "Service Charges Rate", "Amount",
                 "Received Amount", "Remarks"
             ]
-
         else:  # Summary
             headers = [
                 "Date",
@@ -486,8 +517,8 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                 row = [
                     obj.created_at.strftime("%Y-%m-%d"),
                     obj.service_type,
-                    obj.estimated_price or "",
-                    obj.actual_price or "",
+                    obj.total_estimate or "",
+                    obj.total_amount or "",
                 ]
         else:  # report_for == "Casting"
             if report_type == "Detail":
@@ -516,16 +547,16 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
             else:  # Summary
                 row = [
                     obj.created_at.strftime("%Y-%m-%d"),
-                    obj.flask.input_weight if obj.flask else "",
-                    obj.flask.output_weight if obj.flask else "",
-                    obj.flask.machine_wastage if obj.flask else "",
-                    obj.flask.production_weight if obj.flask else "",
+                    obj.total_input_weight or "",
+                    obj.total_output_weight or "",
+                    obj.total_machine_wastage or "",
+                    obj.total_production_weight or "",
                     obj.total_weight24k or "",
-                    obj.wastage_weight or "",
+                    obj.total_wastage_weight or "",
                     obj.total_weight24k or "",
-                    obj.gold_received or "",
-                    obj.service_charges_amount or "",
-                    obj.cash_received or "",
+                    obj.total_gold_received or "",
+                    obj.total_service_charges_amount or "",
+                    obj.total_cash_received or "",
                 ]
 
         for col_idx, cell_value in enumerate(row, 1):
