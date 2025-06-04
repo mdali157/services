@@ -158,7 +158,8 @@
 
 
 {% block scripts %}
-    <script>
+
+<script>
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Set today's date
             let dateInput = document.getElementById('creation_date');
@@ -339,6 +340,28 @@
                 recalculateAllRows();
             });
 
+            // Prevent form submission if production weight is not equal to total weight
+            function calculateTotalWeight() {
+                let totalWeight = 0;
+                const rows = document.querySelectorAll('#casting-details-table tbody tr');
+                rows.forEach(row => {
+                    const weightInput = row.querySelector('[name$="_weight"]');
+                    if (weightInput) {
+                        totalWeight += parseFloat(weightInput.value) || 0;
+                    }
+                });
+                return totalWeight;
+            }
+
+            document.getElementById('add-flask-form').addEventListener('submit', function(event) {
+                const productionWeight = parseFloat(document.getElementById('production_weight').value) || 0;
+                const totalWeight = calculateTotalWeight();
+
+                if (productionWeight !== totalWeight) {
+                    event.preventDefault(); // Prevent form submission
+                    alert('The total weight from the table does not match the production weight. Please correct the weights.');
+                }
+            });
         });
     </script>
 {% endblock %}

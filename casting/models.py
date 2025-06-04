@@ -71,4 +71,7 @@ class Casting(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return str(self.casting_no) + ' ' + self.customer.name + ' ' + self.description
+        # Check if casting_no or customer.name is None, and provide a default value
+        casting_no_str = str(self.casting_no) if self.casting_no else 'No Casting No'
+        customer_name = self.customer.name if self.customer else 'No Customer'
+        return f"{casting_no_str} {customer_name} {self.description or 'No Description'}"
