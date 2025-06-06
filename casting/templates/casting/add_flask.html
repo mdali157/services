@@ -358,8 +358,8 @@
                 const totalWeight = calculateTotalWeight();
 
                 if (productionWeight !== totalWeight) {
-                    event.preventDefault(); // Prevent form submission
-                    alert('The total weight from the table does not match the production weight. Please correct the weights.');
+                    event.preventDefault();
+                    alert(`Error: Production weight (${productionWeight}) does not match the sum of casting weights (${totalWeight.toFixed(2)}). Please adjust the values.`);
                 }
             });
         });

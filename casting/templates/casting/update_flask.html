@@ -255,40 +255,39 @@
         document.getElementById('machine_wastage').value = (inp - out).toFixed(2);
     }
 
-
     /***** 2. recalculateRow(row) – update all derived fields for a given row *****/
     function recalculateRow(row) {
         const karateVal = parseFloat(document.getElementById('karate').value) || 0;
 
-        const weightInput         = row.querySelector(`[name$="_weight"]`);
+        const weightInput = row.querySelector(`[name$="_weight"]`);
         const wastagePercentInput = row.querySelector(`[name$="_wastage_percent"]`);
-        const serviceRateInput    = row.querySelector(`[name$="_service_rate"]`);
+        const serviceRateInput = row.querySelector(`[name$="_service_rate"]`);
 
-        const weight         = parseFloat(weightInput.value) || 0;
+        const weight = parseFloat(weightInput.value) || 0;
         const wastagePercent = parseFloat(wastagePercentInput.value) || 0;
-        const serviceRate    = parseFloat(serviceRateInput.value) || 0;
+        const serviceRate = parseFloat(serviceRateInput.value) || 0;
 
         // Perform calculations
-        const converted24k  = (karateVal / 24) * weight;
+        const converted24k = (karateVal / 24) * weight;
         const wastageWeight = (wastagePercent * converted24k) / 100;
-        const total24k      = converted24k + wastageWeight;
+        const total24k = converted24k + wastageWeight;
         const serviceAmount = serviceRate * weight;
-        const cashReceived  = serviceAmount;
+        const cashReceived = serviceAmount;
 
         // Update fields in the row
-        row.querySelector(`[name$="_converted"]`).value      = converted24k.toFixed(2);
+        row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
         row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
-        row.querySelector(`[name$="_total_24k"]`).value      = total24k.toFixed(2);
-        row.querySelector(`[name$="_gold_received"]`).value  = total24k.toFixed(2);
+        row.querySelector(`[name$="_total_24k"]`).value = total24k.toFixed(2);
+        row.querySelector(`[name$="_gold_received"]`).value = total24k.toFixed(2);
         row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
-        row.querySelector(`[name$="_cash_received"]`).value  = cashReceived.toFixed(2);
+        row.querySelector(`[name$="_cash_received"]`).value = cashReceived.toFixed(2);
     }
 
     /***** 3. bindRowEvents(row) – listen only on weight/wastage%/service inputs *****/
     function bindRowEvents(row) {
-        const weightInput         = row.querySelector(`[name$="_weight"]`);
+        const weightInput = row.querySelector(`[name$="_weight"]`);
         const wastagePercentInput = row.querySelector(`[name$="_wastage_percent"]`);
-        const serviceRateInput    = row.querySelector(`[name$="_service_rate"]`);
+        const serviceRateInput = row.querySelector(`[name$="_service_rate"]`);
 
         [weightInput, wastagePercentInput, serviceRateInput].forEach(input => {
             input.addEventListener('input', () => recalculateRow(row));
@@ -300,7 +299,6 @@
         document.querySelectorAll('#casting-details-table tbody tr')
                 .forEach(row => recalculateRow(row));
     });
-
 
     /***** 5. Autocomplete for Karate & Color in Update Flask *****/
     document.addEventListener('DOMContentLoaded', () => {
@@ -383,10 +381,9 @@
         });
     });
 
-
     /***** 6. Initialize Select2 & Handle New Castings *****/
     $('.select2').select2().on('change', function () {
-        const tableBody   = document.querySelector("#casting-details-table tbody");
+        const tableBody = document.querySelector("#casting-details-table tbody");
         const selectedIds = Array.from(this.selectedOptions).map(opt => opt.value);
 
         // 6a. Remove any new row that is no longer selected
@@ -397,7 +394,7 @@
             }
         });
 
-        // 6b. Add any newly selected casting that isn’t already in the table
+        // 6b. Add any newly selected casting that isn't already in the table
         selectedIds.forEach(id => {
             if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
                 const castingNo = this.querySelector(`option[value="${id}"]`).text;
@@ -479,6 +476,26 @@
     /***** 7. On Page Load, bind recalc to each existing row *****/
     document.querySelectorAll('.existing-row').forEach(row => {
         bindRowEvents(row);
+    });
+
+    /***** 8. Form Submission Validation - Check Production Weight vs Casting Weights *****/
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const productionWeight = parseFloat(document.getElementById('production_weight').value) || 0;
+
+        let totalCastingWeight = 0;
+
+        const rows = document.querySelectorAll('#casting-details-table tbody tr');
+                rows.forEach(row => {
+                    const weightInput = row.querySelector('[name$="_weight"]');
+                    if (weightInput) {
+                        totalCastingWeight += parseFloat(weightInput.value) || 0;
+                    }
+                });
+
+        if (Math.abs(productionWeight - totalCastingWeight) > 0.01) {
+            e.preventDefault();
+            alert(`Error: Production weight (${productionWeight}) does not match the sum of casting weights (${totalCastingWeight.toFixed(2)}). Please adjust the values.`);
+        }
     });
 </script>
 {% endblock %}
