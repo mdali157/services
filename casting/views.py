@@ -368,12 +368,23 @@ def report(request):
                     total_estimate=Sum('estimated_price'),
                     total_amount=Sum('actual_price')
                 ).order_by('created_at', 'service_type')
+
+                # Calculate totals
+                totals = {
+                    'grand_total_estimate': sum(item['total_estimate'] for item in qs if item['total_estimate']),
+                    'grand_total_amount': sum(item['total_amount'] for item in qs if item['total_amount'])
+                }
             else:  # Detail
                 qs = Receiving.objects.filter(created_at__range=(from_date, to_date))
                 if selected_customers:
                     qs = qs.filter(customer__id__in=selected_customers)
                 if selected_service_type and selected_service_type != "All":
                     qs = qs.filter(service_type=selected_service_type)
+
+                totals = {
+                    'grand_total_estimate': sum(item.estimated_price for item in qs if item.estimated_price),
+                    'grand_total_amount': sum(item.actual_price for item in qs if item.actual_price)
+                }
 
         else:  # report_for == "Casting"
             if report_type == "Summary":
@@ -394,10 +405,47 @@ def report(request):
                     total_service_charges_amount=Sum('service_charges_amount'),
                     total_cash_received=Sum('cash_received')
                 ).order_by('created_at')
+
+                totals = {
+                    'grand_total_input': sum(
+                        float(item['total_input_weight']) for item in qs if item['total_input_weight']),
+                    'grand_total_output': sum(
+                        float(item['total_output_weight']) for item in qs if item['total_output_weight']),
+                    'grand_total_wastage': sum(
+                        float(item['total_machine_wastage']) for item in qs if item['total_machine_wastage']),
+                    'grand_total_production': sum(
+                        float(item['total_production_weight']) for item in qs if item['total_production_weight']),
+                    'grand_total_24k': sum(float(item['total_weight24k']) for item in qs if item['total_weight24k']),
+                    'grand_total_wastage_weight': sum(
+                        float(item['total_wastage_weight']) for item in qs if item['total_wastage_weight']),
+                    'grand_total_gold': sum(
+                        float(item['total_gold_received']) for item in qs if item['total_gold_received']),
+                    'grand_total_service': sum(float(item['total_service_charges_amount']) for item in qs if
+                                               item['total_service_charges_amount']),
+                    'grand_total_cash': sum(
+                        float(item['total_cash_received']) for item in qs if item['total_cash_received'])
+                }
             else:  # Detail
                 qs = Casting.objects.filter(created_at__range=(from_date, to_date))
                 if selected_customers:
                     qs = qs.filter(customer__id__in=selected_customers)
+
+                totals = {
+                    'grand_total_input': sum(
+                        float(item.flask.input_weight) for item in qs if item.flask and item.flask.input_weight),
+                    'grand_total_output': sum(
+                        float(item.flask.output_weight) for item in qs if item.flask and item.flask.output_weight),
+                    'grand_total_wastage': sum(
+                        float(item.flask.machine_wastage) for item in qs if item.flask and item.flask.machine_wastage),
+                    'grand_total_production': sum(float(item.flask.production_weight) for item in qs if
+                                                  item.flask and item.flask.production_weight),
+                    'grand_total_24k': sum(float(item.total_weight24k) for item in qs if item.total_weight24k),
+                    'grand_total_wastage_weight': sum(float(item.wastage_weight) for item in qs if item.wastage_weight),
+                    'grand_total_gold': sum(float(item.gold_received) for item in qs if item.gold_received),
+                    'grand_total_service': sum(
+                        float(item.service_charges_amount) for item in qs if item.service_charges_amount),
+                    'grand_total_cash': sum(float(item.cash_received) for item in qs if item.cash_received)
+                }
 
         # 4) Branch on action
         if action == "pdf":
@@ -408,6 +456,7 @@ def report(request):
                 report_type=report_type,
                 from_date=from_date,
                 to_date=to_date,
+                totals=totals
             )
         else:  # action == "excel"
             return generate_excel_response(
@@ -416,6 +465,7 @@ def report(request):
                 report_type=report_type,
                 from_date=from_date,
                 to_date=to_date,
+                totals=totals
             )
 
     # If GET, just render the filter form
@@ -426,13 +476,14 @@ def report(request):
     )
 
 
-def generate_pdf_response(request, queryset, report_for, report_type, from_date, to_date):
+def generate_pdf_response(request, queryset, report_for, report_type, from_date, to_date, totals):
     context = {
         "report_for": report_for,
         "report_type": report_type,
         "from_date": from_date,
         "to_date": to_date,
-        "items": queryset,  # Receivings or Castings
+        "items": queryset,
+        "totals": totals
     }
 
     template = get_template("casting/report_pdf.html")
@@ -449,7 +500,7 @@ def generate_pdf_response(request, queryset, report_for, report_type, from_date,
     return response
 
 
-def generate_excel_response(queryset, report_for, report_type, from_date, to_date):
+def generate_excel_response(queryset, report_for, report_type, from_date, to_date, totals):
     wb = openpyxl.Workbook()
     ws = wb.active
 
@@ -496,7 +547,7 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
         cell.value = column_title
         ws.column_dimensions[get_column_letter(col_idx)].width = max(len(column_title) * 1.2, 15)
 
-    # 3) Write each row
+    # Write each row
     row_num = 2
     for obj in queryset:
         row = []
@@ -515,10 +566,10 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                 ]
             else:  # Summary
                 row = [
-                    obj.created_at.strftime("%Y-%m-%d"),
-                    obj.service_type,
-                    obj.total_estimate or "",
-                    obj.total_amount or "",
+                    obj["created_at"].strftime("%Y-%m-%d"),
+                    obj["service_type"],
+                    obj["total_estimate"] or "",
+                    obj["total_amount"] or "",
                 ]
         else:  # report_for == "Casting"
             if report_type == "Detail":
@@ -543,26 +594,71 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                     obj.cash_received or "",
                     obj.remarks if obj.remarks else "",
                 ]
-
             else:  # Summary
                 row = [
-                    obj.created_at.strftime("%Y-%m-%d"),
-                    obj.total_input_weight or "",
-                    obj.total_output_weight or "",
-                    obj.total_machine_wastage or "",
-                    obj.total_production_weight or "",
-                    obj.total_weight24k or "",
-                    obj.total_wastage_weight or "",
-                    obj.total_weight24k or "",
-                    obj.total_gold_received or "",
-                    obj.total_service_charges_amount or "",
-                    obj.total_cash_received or "",
+                    obj["created_at"].strftime("%Y-%m-%d"),
+                    obj["total_input_weight"] or "",
+                    obj["total_output_weight"] or "",
+                    obj["total_machine_wastage"] or "",
+                    obj["total_production_weight"] or "",
+                    obj["total_weight24k"] or "",
+                    obj["total_wastage_weight"] or "",
+                    obj["total_weight24k"] or "",
+                    obj["total_gold_received"] or "",
+                    obj["total_service_charges_amount"] or "",
+                    obj["total_cash_received"] or "",
                 ]
 
         for col_idx, cell_value in enumerate(row, 1):
             ws.cell(row=row_num, column=col_idx).value = cell_value
 
         row_num += 1
+
+    # Add totals row
+    row_num += 1
+    if report_for == "Services":
+        if report_type == "Detail":
+            ws.cell(row=row_num, column=1, value="Grand Total:")
+            ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=6)
+            ws.cell(row=row_num, column=7, value=totals['grand_total_estimate'])
+            ws.cell(row=row_num, column=8, value=totals['grand_total_amount'])
+        else:  # Summary
+            ws.cell(row=row_num, column=1, value="Grand Total:")
+            ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=2)
+            ws.cell(row=row_num, column=3, value=totals['grand_total_estimate'])
+            ws.cell(row=row_num, column=4, value=totals['grand_total_amount'])
+    else:  # Casting
+        if report_type == "Detail":
+            ws.cell(row=row_num, column=1, value="Grand Total:")
+            ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=4)
+            ws.cell(row=row_num, column=5, value=totals['grand_total_input'])
+            ws.cell(row=row_num, column=6, value=totals['grand_total_output'])
+            ws.cell(row=row_num, column=7, value=totals['grand_total_wastage'])
+            ws.cell(row=row_num, column=10, value=totals['grand_total_production'])
+            ws.cell(row=row_num, column=11, value=totals['grand_total_24k'])
+            ws.cell(row=row_num, column=13, value=totals['grand_total_wastage_weight'])
+            ws.cell(row=row_num, column=14, value=totals['grand_total_24k'])
+            ws.cell(row=row_num, column=15, value=totals['grand_total_gold'])
+            ws.cell(row=row_num, column=17, value=totals['grand_total_service'])
+            ws.cell(row=row_num, column=18, value=totals['grand_total_cash'])
+        else:  # Summary
+            ws.cell(row=row_num, column=1, value="Grand Total:")
+            ws.cell(row=row_num, column=2, value=totals['grand_total_input'])
+            ws.cell(row=row_num, column=3, value=totals['grand_total_output'])
+            ws.cell(row=row_num, column=4, value=totals['grand_total_wastage'])
+            ws.cell(row=row_num, column=5, value=totals['grand_total_production'])
+            ws.cell(row=row_num, column=6, value=totals['grand_total_24k'])
+            ws.cell(row=row_num, column=7, value=totals['grand_total_wastage_weight'])
+            ws.cell(row=row_num, column=8, value=totals['grand_total_24k'])
+            ws.cell(row=row_num, column=9, value=totals['grand_total_gold'])
+            ws.cell(row=row_num, column=10, value=totals['grand_total_service'])
+            ws.cell(row=row_num, column=11, value=totals['grand_total_cash'])
+
+    # Format totals row
+    for row in ws.iter_rows(min_row=row_num, max_row=row_num):
+        for cell in row:
+            cell.font = openpyxl.styles.Font(bold=True)
+            cell.fill = openpyxl.styles.PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
 
     output = io.BytesIO()
     wb.save(output)
