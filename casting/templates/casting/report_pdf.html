@@ -5,7 +5,7 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 5mm;
+            margin: 10mm;
         }
 
         body {
@@ -13,12 +13,13 @@
             font-size: 8pt;
             margin: 0;
             padding: 0;
+            zoom: 0.85;
         }
 
         .report-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: auto;
         }
 
         .report-table th,
@@ -26,8 +27,8 @@
             border: 1px solid #000;
             padding: 3px;
             text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-wrap: break-word;
+            min-width: 40px;
         }
 
         .report-table th {
@@ -57,54 +58,54 @@
         <tr>
             {% if report_for == "Services" %}
                 {% if report_type == "Detail" %}
-                    <th style="width: 8%">Service #</th>
-                    <th style="width: 8%">Date</th>
-                    <th style="width: 10%">Type</th>
-                    <th style="width: 15%">Customer</th>
-                    <th style="width: 10%">Mobile #</th>
-                    <th style="width: 20%">Description</th>
-                    <th style="width: 8%">Estimate</th>
-                    <th style="width: 8%">Amount</th>
-                    <th style="width: 15%">Remarks</th>
+                    <th>Service #</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Mobile #</th>
+                    <th>Description</th>
+                    <th>Estimate</th>
+                    <th>Amount</th>
+                    <th>Remarks</th>
                 {% else %}
-                    <th style="width: 20%">Date</th>
-                    <th style="width: 30%">Type</th>
-                    <th style="width: 25%">Estimate</th>
-                    <th style="width: 25%">Amount</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Estimate</th>
+                    <th>Amount</th>
                 {% endif %}
             {% else %}
                 {% if report_type == "Detail" %}
-                    <th style="width: 5%">Flask #</th>
-                    <th style="width: 7%">Date</th>
-                    <th style="width: 5%">Karate</th>
-                    <th style="width: 5%">Color</th>
-                    <th style="width: 6%">In WT</th>
-                    <th style="width: 6%">Out WT</th>
-                    <th style="width: 6%">Mach Wst</th>
-                    <th style="width: 5%">Cast #</th>
-                    <th style="width: 10%">Party</th>
-                    <th style="width: 6%">Prod WT</th>
-                    <th style="width: 6%">Wt-24K</th>
-                    <th style="width: 5%">Wstg %</th>
-                    <th style="width: 6%">Wstg WT</th>
-                    <th style="width: 6%">Total WT</th>
-                    <th style="width: 6%">Gold Rec</th>
-                    <th style="width: 5%">Svc Rate</th>
-                    <th style="width: 6%">Amount</th>
-                    <th style="width: 6%">Cash Rec</th>
-                    <th style="width: 8%">Remarks</th>
+                    <th>Flask #</th>
+                    <th>Date</th>
+                    <th>Karate</th>
+                    <th>Color</th>
+                    <th>In WT</th>
+                    <th>Out WT</th>
+                    <th>Mach Wst</th>
+                    <th>Cast #</th>
+                    <th>Party</th>
+                    <th>Prod WT</th>
+                    <th>Wt-24K</th>
+                    <th>Wstg %</th>
+                    <th>Wstg WT</th>
+                    <th>Total WT</th>
+                    <th>Gold Rec</th>
+                    <th>Svc Rate</th>
+                    <th>Amount</th>
+                    <th>Cash Rec</th>
+                    <th>Remarks</th>
                 {% else %}
-                    <th style="width: 15%">Date</th>
-                    <th style="width: 10%">In WT</th>
-                    <th style="width: 10%">Out WT</th>
-                    <th style="width: 10%">Mach Wst</th>
-                    <th style="width: 10%">Prod WT</th>
-                    <th style="width: 10%">Wt-24K</th>
-                    <th style="width: 10%">Wstg WT</th>
-                    <th style="width: 10%">Total WT</th>
-                    <th style="width: 10%">Gold Rec</th>
-                    <th style="width: 10%">Svc Amt</th>
-                    <th style="width: 10%">Cash Rec</th>
+                    <th>Date</th>
+                    <th>In WT</th>
+                    <th>Out WT</th>
+                    <th>Mach Wst</th>
+                    <th>Prod WT</th>
+                    <th>Wt-24K</th>
+                    <th>Wstg WT</th>
+                    <th>Total WT</th>
+                    <th>Gold Rec</th>
+                    <th>Svc Amt</th>
+                    <th>Cash Rec</th>
                 {% endif %}
             {% endif %}
         </tr>

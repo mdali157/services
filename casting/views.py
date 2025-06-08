@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.template.loader import get_template
 from django.urls import reverse
 from openpyxl.utils import get_column_letter
-from xhtml2pdf import pisa
+from weasyprint import HTML
 
 from customers.models import Customer
 from receiving.models import ServiceType, Receiving
@@ -487,16 +487,13 @@ def generate_pdf_response(request, queryset, report_for, report_type, from_date,
     }
 
     template = get_template("casting/report_pdf.html")
-    html = template.render(context)
+    html_string = template.render(context)
 
-    result = io.BytesIO()
-    pisa_status = pisa.CreatePDF(html, dest=result)
-    if pisa_status.err:
-        return HttpResponse("Error generating PDF", status=500)
+    # Render to PDF using WeasyPrint
+    pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf()
 
-    result.seek(0)
-    response = HttpResponse(result.read(), content_type="application/pdf")
-    response["Content-Disposition"] = 'inline; filename="report.pdf"'
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="report.pdf"'
     return response
 
 
