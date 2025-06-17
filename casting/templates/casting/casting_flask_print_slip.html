@@ -48,15 +48,16 @@
 <body onload="delayedPrint()">
     <div class="slip">
         <div class="center">
-            <h3>Casting Charges Slip</h3>
+            <h3>Delivery-Services</h3>
         </div>
         <hr>
+        <p><span class="field-label">Slip No:</span> {{ casting.casting_no}}</p>
         <p><span class="field-label">Date:</span> {{ casting.created_at|date:"Y-m-d" }}</p>
+        <p><span class="field-label">Client Name:</span> {{ casting.customer.name}}</p>
         <p><span class="field-label">Karate:</span> {{ casting.karate }}</p>
         <p><span class="field-label">Color:</span> {{ casting.color }}</p>
         <p><span class="field-label">Weight:</span> {{ casting.weight }}</p>
-        <p><span class="field-label">Weight %:</span> {{ casting.wastage_percentage }}</p>
-        <p><span class="field-label">Wastage Weight:</span> {{ casting.wastage_weight }}</p>
+        <p><span class="field-label">Wastage:</span> {{ casting.wastage_weight }}</p>
         <p><span class="field-label">Total Weight 24K:</span> {{ casting.total_weight24k }}</p>
         <p><span class="field-label">Charges Rate:</span> {{ casting.service_charges_rate }}</p>
         <p><span class="field-label">Charges Amount:</span> {{ casting.service_charges_amount }}</p>

@@ -66,7 +66,7 @@
                 <div class="col-md-3">
                     <label for="input_weight" class="form-label">Input Weight</label>
                     <input type="number"
-                           step="0.01"
+                           step="0.001"
                            id="input_weight"
                            name="input_weight"
                            class="form-control"
@@ -76,7 +76,7 @@
                 <div class="col-md-3">
                     <label for="output_weight" class="form-label">Output Weight</label>
                     <input type="number"
-                           step="0.01"
+                           step="0.001"
                            id="output_weight"
                            name="output_weight"
                            class="form-control"
@@ -86,7 +86,7 @@
                 <div class="col-md-3">
                     <label for="machine_wastage" class="form-label">Machine Wastage</label>
                     <input type="number"
-                           step="0.01"
+                           step="0.001"
                            id="machine_wastage"
                            name="machine_wastage"
                            class="form-control"
@@ -95,7 +95,7 @@
                 <div class="col-md-3">
                     <label for="production_weight" class="form-label">Production Weight</label>
                     <input type="number"
-                           step="0.01"
+                           step="0.001"
                            id="production_weight"
                            name="production_weight"
                            class="form-control"
@@ -248,7 +248,7 @@
             function recalcWastage() {
                 let inp = parseFloat(document.getElementById('input_weight').value) || 0;
                 let out = parseFloat(document.getElementById('output_weight').value) || 0;
-                let wastage = (inp - out).toFixed(2);
+                let wastage = (inp - out).toFixed(3);
                 document.getElementById('machine_wastage').value = wastage;
             }
             document.getElementById('input_weight').addEventListener('input', recalcWastage);
