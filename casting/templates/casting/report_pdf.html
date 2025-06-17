@@ -90,9 +90,11 @@
                     <th>Wstg WT</th>
                     <th>Total WT</th>
                     <th>Gold Rec</th>
+                    <th>Balance Gold</th>
                     <th>Svc Rate</th>
                     <th>Amount</th>
                     <th>Cash Rec</th>
+                    <th>Balance Cash</th>
                     <th>Remarks</th>
                 {% else %}
                     <th>Date</th>
@@ -104,8 +106,10 @@
                     <th>Wstg WT</th>
                     <th>Total WT</th>
                     <th>Gold Rec</th>
+                    <th>Balance Gold</th>
                     <th>Svc Amt</th>
                     <th>Cash Rec</th>
+                    <th>Balance Cash</th>
                 {% endif %}
             {% endif %}
         </tr>
@@ -147,9 +151,11 @@
                     <td>{{ obj.wastage_weight|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.total_weight24k|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.gold_received|default_if_none:"-"|floatformat:3 }}</td>
+                    <td>{{ obj.balance_gold|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.service_charges_rate|default_if_none:"-"|floatformat:2 }}</td>
                     <td>{{ obj.service_charges_amount|default_if_none:"-"|floatformat:2 }}</td>
                     <td>{{ obj.cash_received|default_if_none:"-"|floatformat:2 }}</td>
+                    <td>{{ obj.balance_cash|default_if_none:"-"|floatformat:2 }}</td>
                     <td>{{ obj.remarks|default_if_none:"-"|truncatechars:20 }}</td>
                 {% else %}
                     <td>{{ obj.created_at|date:"Y-m-d" }}</td>
@@ -161,8 +167,10 @@
                     <td>{{ obj.total_wastage_weight|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.total_weight24k|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.total_gold_received|default_if_none:"-"|floatformat:3 }}</td>
+                    <td>{{ obj.balance_gold|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.total_service_charges_amount|default_if_none:"-"|floatformat:2 }}</td>
                     <td>{{ obj.total_cash_received|default_if_none:"-"|floatformat:2 }}</td>
+                    <td>{{ obj.balance_cash|default_if_none:"-"|floatformat:2 }}</td>
                 {% endif %}
             {% endif %}
         </tr>
@@ -195,9 +203,11 @@
                     <td>{{ totals.grand_total_wastage_weight|floatformat:3 }}</td>
                     <td>{{ totals.grand_total_24k|floatformat:3 }}</td>
                     <td>{{ totals.grand_total_gold|floatformat:3 }}</td>
+                    <td>{{ totals.grand_total_balance_gold|floatformat:3 }}</td>
                     <td></td>
                     <td>{{ totals.grand_total_service|floatformat:2 }}</td>
                     <td>{{ totals.grand_total_cash|floatformat:2 }}</td>
+                    <td>{{ totals.grand_total_balance_cash|floatformat:2 }}</td>
                     <td></td>
                 {% else %}
                     <td style="text-align: right;">Grand Total:</td>
@@ -209,8 +219,10 @@
                     <td>{{ totals.grand_total_wastage_weight|floatformat:3 }}</td>
                     <td>{{ totals.grand_total_24k|floatformat:3 }}</td>
                     <td>{{ totals.grand_total_gold|floatformat:3 }}</td>
+                    <td>{{ totals.grand_total_balance_gold|floatformat:3 }}</td>
                     <td>{{ totals.grand_total_service|floatformat:2 }}</td>
                     <td>{{ totals.grand_total_cash|floatformat:2 }}</td>
+                    <td>{{ totals.grand_total_balance_cash|floatformat:2 }}</td>
                 {% endif %}
             {% endif %}
         </tr>

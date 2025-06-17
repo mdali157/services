@@ -171,7 +171,9 @@ def print_casting_slip(request, casting_id):
 
 def casting_flask_print_slip(request, casting_id):
     casting = get_object_or_404(Casting, pk=casting_id)
-    return render(request, 'casting/casting_flask_print_slip.html', {'casting': casting})
+    total_balance = float(casting.service_charges_amount) - float(casting.cash_received)
+    total_gold_balance = float(casting.total_weight24k) - float(casting.gold_received)
+    return render(request, 'casting/casting_flask_print_slip.html', {'casting': casting, 'total_balance': total_balance, 'total_gold_balance': total_gold_balance})
 
 
 def all_flask(request):
@@ -223,9 +225,7 @@ def add_flask(request):
             machine_wastage=request.POST.get("machine_wastage", ""),
             production_weight=request.POST.get("production_weight", ""),
             created_at=request.POST.get("creation_date", ""),
-            # If your Flask model instead has FK fields for karate & color:
-            # karate=karate_obj,
-            # color=color_obj,
+
         )
 
         # 6. Loop through POST keys to find all selected castings (those ending with "_sno")
@@ -243,11 +243,8 @@ def add_flask(request):
                 casting.converted24k = request.POST.get(f"{base}_converted")
                 casting.wastage_percentage = request.POST.get(f"{base}_wastage_percent")
                 casting.wastage_weight = request.POST.get(f"{base}_wastage_weight")
-                casting.total_weight24k = request.POST.get(f"{base}_total_24k")
-                casting.gold_received = request.POST.get(f"{base}_gold_received")
                 casting.service_charges_rate = request.POST.get(f"{base}_service_rate")
                 casting.service_charges_amount = request.POST.get(f"{base}_service_amount")
-                casting.cash_received = request.POST.get(f"{base}_cash_received")
                 casting.flask = flask
                 casting.modified_by = request.user
                 casting.save()
@@ -297,11 +294,8 @@ def update_flask(request, flask_id):
             casting.converted24k = request.POST.get(f"{prefix}converted")
             casting.wastage_percentage = request.POST.get(f"{prefix}wastage_percent")
             casting.wastage_weight = request.POST.get(f"{prefix}wastage_weight")
-            casting.total_weight24k = request.POST.get(f"{prefix}total_24k")
-            casting.gold_received = request.POST.get(f"{prefix}gold_received")
             casting.service_charges_rate = request.POST.get(f"{prefix}service_rate")
             casting.service_charges_amount = request.POST.get(f"{prefix}service_amount")
-            casting.cash_received = request.POST.get(f"{prefix}cash_received")
             casting.modified_by = request.user
             casting.save()
 
@@ -316,11 +310,8 @@ def update_flask(request, flask_id):
                 casting.converted24k = request.POST.get(f"{prefix}converted")
                 casting.wastage_percentage = request.POST.get(f"{prefix}wastage_percent")
                 casting.wastage_weight = request.POST.get(f"{prefix}wastage_weight")
-                casting.total_weight24k = request.POST.get(f"{prefix}total_24k")
-                casting.gold_received = request.POST.get(f"{prefix}gold_received")
                 casting.service_charges_rate = request.POST.get(f"{prefix}service_rate")
                 casting.service_charges_amount = request.POST.get(f"{prefix}service_amount")
-                casting.cash_received = request.POST.get(f"{prefix}cash_received")
                 casting.flask = flask
                 casting.modified_by = request.user
                 casting.save()
@@ -406,6 +397,12 @@ def report(request):
                     total_cash_received=Sum('cash_received')
                 ).order_by('created_at')
 
+                for item in qs:
+                    item["balance_cash"] = float(item.get("total_service_charges_amount") or 0) - float(
+                        item.get("total_cash_received") or 0)
+                    item["balance_gold"] = float(item.get("total_weight24k") or 0) - float(
+                        item.get("total_gold_received") or 0)
+
                 totals = {
                     'grand_total_input': sum(
                         float(item['total_input_weight']) for item in qs if item['total_input_weight']),
@@ -423,12 +420,20 @@ def report(request):
                     'grand_total_service': sum(float(item['total_service_charges_amount']) for item in qs if
                                                item['total_service_charges_amount']),
                     'grand_total_cash': sum(
-                        float(item['total_cash_received']) for item in qs if item['total_cash_received'])
+                        float(item['total_cash_received']) for item in qs if item['total_cash_received']),
+                    'grand_total_balance_cash': sum(item['balance_cash'] for item in qs),
+                    'grand_total_balance_gold': sum(item['balance_gold'] for item in qs),
+
                 }
             else:  # Detail
                 qs = Casting.objects.filter(created_at__range=(from_date, to_date))
+
                 if selected_customers:
                     qs = qs.filter(customer__id__in=selected_customers)
+
+                for item in qs:
+                    item.balance_gold = (float(item.total_weight24k or 0) - float(item.gold_received or 0))
+                    item.balance_cash = (float(item.service_charges_amount or 0) - float(item.cash_received or 0))
 
                 totals = {
                     'grand_total_input': sum(
@@ -444,7 +449,10 @@ def report(request):
                     'grand_total_gold': sum(float(item.gold_received) for item in qs if item.gold_received),
                     'grand_total_service': sum(
                         float(item.service_charges_amount) for item in qs if item.service_charges_amount),
-                    'grand_total_cash': sum(float(item.cash_received) for item in qs if item.cash_received)
+                    'grand_total_cash': sum(float(item.cash_received) for item in qs if item.cash_received),
+                    'grand_total_balance_cash': sum(item.balance_cash for item in qs),
+                    'grand_total_balance_gold': sum(item.balance_gold for item in qs)
+
                 }
 
         # 4) Branch on action
@@ -521,8 +529,8 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
             headers = [
                 "Flask #", "Date", "Karate", "Color", "Input WT", "Output WT", "Machine Wastage",
                 "Cast #", "Party Name", "Production Weight", "Weight-24K", "Wastage %",
-                "Wastage Wt", "Total Wt", "Gold Received", "Service Charges Rate", "Amount",
-                "Received Amount", "Remarks"
+                "Wastage Wt", "Total Wt", "Gold Received", "Balance Gold","Service Charges Rate", "Amount",
+                "Received Amount", "Balance Cash", "Remarks"
             ]
         else:  # Summary
             headers = [
@@ -535,8 +543,10 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                 "Wastage Wt",
                 "Total Wt",
                 "Gold Received",
+                "Balance Gold",
                 "Service Amount",
                 "Received Amount",
+                "Balance Cash"
             ]
 
     for col_idx, column_title in enumerate(headers, 1):
@@ -586,9 +596,11 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                     obj.wastage_weight or "",
                     obj.total_weight24k or "",
                     obj.gold_received or "",
+                    obj.balance_gold,
                     obj.service_charges_rate or "",
                     obj.service_charges_amount or "",
                     obj.cash_received or "",
+                    obj.balance_cash,
                     obj.remarks if obj.remarks else "",
                 ]
             else:  # Summary
@@ -602,8 +614,10 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                     obj["total_wastage_weight"] or "",
                     obj["total_weight24k"] or "",
                     obj["total_gold_received"] or "",
+                    obj["balance_gold"],
                     obj["total_service_charges_amount"] or "",
                     obj["total_cash_received"] or "",
+                    obj["balance_cash"]
                 ]
 
         for col_idx, cell_value in enumerate(row, 1):
@@ -636,8 +650,10 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
             ws.cell(row=row_num, column=13, value=totals['grand_total_wastage_weight'])
             ws.cell(row=row_num, column=14, value=totals['grand_total_24k'])
             ws.cell(row=row_num, column=15, value=totals['grand_total_gold'])
-            ws.cell(row=row_num, column=17, value=totals['grand_total_service'])
-            ws.cell(row=row_num, column=18, value=totals['grand_total_cash'])
+            ws.cell(row=row_num, column=16, value=totals['grand_total_balance_gold'])
+            ws.cell(row=row_num, column=18, value=totals['grand_total_service'])
+            ws.cell(row=row_num, column=19, value=totals['grand_total_cash'])
+            ws.cell(row=row_num, column=20, value=totals['grand_total_balance_cash'])
         else:  # Summary
             ws.cell(row=row_num, column=1, value="Grand Total:")
             ws.cell(row=row_num, column=2, value=totals['grand_total_input'])
@@ -648,10 +664,12 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
             ws.cell(row=row_num, column=7, value=totals['grand_total_wastage_weight'])
             ws.cell(row=row_num, column=8, value=totals['grand_total_24k'])
             ws.cell(row=row_num, column=9, value=totals['grand_total_gold'])
-            ws.cell(row=row_num, column=10, value=totals['grand_total_service'])
-            ws.cell(row=row_num, column=11, value=totals['grand_total_cash'])
+            ws.cell(row=row_num, column=10, value=totals['grand_total_balance_gold'])  # Balance Gold
+            ws.cell(row=row_num, column=11, value=totals['grand_total_service'])  # Service Amount
+            ws.cell(row=row_num, column=12, value=totals['grand_total_cash'])  # Received Amount
+            ws.cell(row=row_num, column=13, value=totals['grand_total_balance_cash'])
 
-    # Format totals row
+            # Format totals row
     for row in ws.iter_rows(min_row=row_num, max_row=row_num):
         for cell in row:
             cell.font = openpyxl.styles.Font(bold=True)

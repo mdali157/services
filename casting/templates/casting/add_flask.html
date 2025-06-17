@@ -130,14 +130,11 @@
                         <tr>
                             <th>Casting S-No</th>
                             <th>Weight</th>
-                            <th>Converted 24K</th>
                             <th>Wastage %</th>
                             <th>Wastage Weight</th>
-                            <th>Total Weight 24K</th>
-                            <th>Gold Received</th>
+                            <th>Converted 24K</th>
                             <th>Services Charges Rate</th>
                             <th>Services Charges Amount</th>
-                            <th>Cash Received</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -277,10 +274,7 @@
 
                 row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
                 row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
-                row.querySelector(`[name$="_total_24k"]`).value = total24k.toFixed(2);
-                row.querySelector(`[name$="_gold_received"]`).value = total24k.toFixed(2);
                 row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
-                row.querySelector(`[name$="_cash_received"]`).value = cashReceived.toFixed(2);
             }
 
             function bindRowEvents(row) {
@@ -322,15 +316,12 @@
                         row.setAttribute("data-casting-id", id);
                         row.innerHTML = `
                             <td><input type="text" name="casting_${id}_sno" class="form-control" value="${opt.text}" readonly></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_weight" class="form-control"></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_converted" class="form-control"></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_wastage_percent" class="form-control"></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_wastage_weight" class="form-control"></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_total_24k" class="form-control" readonly></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_gold_received" class="form-control"></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_service_rate" class="form-control"></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_service_amount" class="form-control" ></td>
-                            <td><input type="number" step="0.01" name="casting_${id}_cash_received" class="form-control" ></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_weight" class="form-control"></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_wastage_percent" class="form-control"></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_wastage_weight" class="form-control"></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_converted" class="form-control"></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_service_rate" class="form-control"></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_service_amount" class="form-control" ></td>
                         `;
                         tableBody.appendChild(row);
                         bindRowEvents(row);
