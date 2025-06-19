@@ -107,6 +107,8 @@ def update_casting(request, casting_id):
         creation_date = request.POST.get("creation_date")  # YYYY-MM-DD
         captured_image_data = request.POST.get("captured_image")  # data:image/png;base64,…
         is_delivered = request.POST.get('is_delivered')
+        cash_received = request.POST.get('cash_received')
+        gold_received = request.POST.get('gold_received')
 
         karate_obj, _ = Karate.objects.get_or_create(name=karate_value)
         color_obj, _ = Color.objects.get_or_create(name=color_value)
@@ -117,6 +119,8 @@ def update_casting(request, casting_id):
         casting.description = description
         casting.remarks = delivery_remarks
         casting.created_at = creation_date
+        casting.gold_received = gold_received
+        casting.cash_received = cash_received
         casting.is_delivered = is_delivered == 'on'
         casting.modified_by = request.user
 

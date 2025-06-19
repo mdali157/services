@@ -113,7 +113,7 @@
                             name="related_castings">
                         {% for casting in unflasked_castings %}
                             <option value="{{ casting.id }}">
-                                {{ casting.casting_no }}
+                                {{ casting.casting_no }} - {{ casting.customer.name }}
                             </option>
                         {% empty %}
                             <option disabled>No eligible castings</option>
@@ -267,7 +267,7 @@
                 const serviceRate = parseFloat(serviceRateInput.value) || 0;
 
                 const converted24k = (karateValue / 24) * weight;
-                const wastageWeight = (wastagePercent * converted24k) / 100;
+                const wastageWeight = (weight/96)*wastagePercent;
                 const total24k = converted24k + wastageWeight;
                 const serviceAmount = serviceRate * weight;
                 const cashReceived = serviceAmount;
@@ -313,9 +313,10 @@
                     const id = opt.value;
                     if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
                         const row = document.createElement("tr");
+                        let casting_no = opt.text.split("-")[0]
                         row.setAttribute("data-casting-id", id);
                         row.innerHTML = `
-                            <td><input type="text" name="casting_${id}_sno" class="form-control" value="${opt.text}" readonly></td>
+                            <td><input type="text" name="casting_${id}_sno" class="form-control" value="${casting_no}" readonly></td>
                             <td><input type="number" step="0.001" name="casting_${id}_weight" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_wastage_percent" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_wastage_weight" class="form-control"></td>

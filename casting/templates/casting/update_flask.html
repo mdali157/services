@@ -128,7 +128,7 @@
                         name="related_castings"
                         multiple>
                     {% for casting in unlinked_castings %}
-                        <option value="{{ casting.id }}">{{ casting.casting_no }}</option>
+                        <option value="{{ casting.id }}">{{ casting.casting_no }} - {{ casting.customer.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -245,7 +245,8 @@
 
         // Perform calculations
         const converted24k = (karateVal / 24) * weight;
-        const wastageWeight = (wastagePercent * converted24k) / 100;
+        const wastageWeight = (weight/96)*wastagePercent;
+
         const total24k = converted24k + wastageWeight;
         const serviceAmount = serviceRate * weight;
         const cashReceived = serviceAmount;
@@ -370,7 +371,8 @@
         // 6b. Add any newly selected casting that isn't already in the table
         selectedIds.forEach(id => {
             if (!tableBody.querySelector(`tr[data-casting-id="${id}"]`)) {
-                const castingNo = this.querySelector(`option[value="${id}"]`).text;
+                const casting_no_name = this.querySelector(`option[value="${id}"]`).text;
+                let castingNo = casting_no_name.split("-")[0]
                 const row = document.createElement("tr");
                 row.setAttribute("data-casting-id", id);
 

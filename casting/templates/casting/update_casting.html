@@ -66,6 +66,14 @@
                                            value="{{ casting.created_at|date:'Y-m-d' }}">
                                 </div>
                             </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label>Gold Received</label>
+                                    <input type="text" name="gold_received" maxlength="200"
+                                           class="form-control" id="gold_received"
+                                           value="{{ casting.gold_received }}">
+                                </div>
+                            </div>
                         </div> <!-- /row -->
 
                         <div class="row">
@@ -82,6 +90,14 @@
                                     <label for="delivery_remarks">Delivery Remarks</label>
                                         <input type="text" name="delivery_remarks" id="delivery_remarks"
                                                value="{{ casting.remarks }}"
+                                               class="form-control" >
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <div class="form-group">
+                                    <label for="cash_received">Cash Received</label>
+                                        <input type="text" name="cash_received" id="cash_received"
+                                               value="{{ casting.cash_received }}"
                                                class="form-control" >
                                 </div>
                             </div>
