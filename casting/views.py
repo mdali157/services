@@ -175,8 +175,14 @@ def print_casting_slip(request, casting_id):
 
 def casting_flask_print_slip(request, casting_id):
     casting = get_object_or_404(Casting, pk=casting_id)
-    total_balance = float(casting.service_charges_amount) - float(casting.cash_received)
-    total_gold_balance = float(casting.total_weight24k) - float(casting.gold_received)
+    service_charges_amount = float(casting.service_charges_amount) if casting.service_charges_amount is not None else 0
+    cash_received = float(casting.cash_received) if casting.cash_received is not None else 0
+    total_balance = service_charges_amount - cash_received
+    total_weight24k = float(casting.total_weight24k) if casting.total_weight24k is not None else 0
+    gold_received = float(casting.gold_received) if casting.gold_received is not None else 0
+
+    total_gold_balance = total_weight24k - gold_received
+
     return render(request, 'casting/casting_flask_print_slip.html', {'casting': casting, 'total_balance': total_balance, 'total_gold_balance': total_gold_balance})
 
 
