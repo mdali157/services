@@ -251,6 +251,7 @@ def add_flask(request):
                 # 7. Update each Casting’s fields
                 casting.weight = request.POST.get(f"{base}_weight")
                 casting.converted24k = request.POST.get(f"{base}_converted")
+                casting.total_weight24k = request.POST.get(f"{base}_total")
                 casting.wastage_percentage = request.POST.get(f"{base}_wastage_percent")
                 casting.wastage_weight = request.POST.get(f"{base}_wastage_weight")
                 casting.service_charges_rate = request.POST.get(f"{base}_service_rate")
@@ -302,6 +303,7 @@ def update_flask(request, flask_id):
             prefix = f"casting_{casting.id}_"
             casting.weight = request.POST.get(f"{prefix}weight")
             casting.converted24k = request.POST.get(f"{prefix}converted")
+            casting.total_weight24k = request.POST.get(f"{prefix}total")
             casting.wastage_percentage = request.POST.get(f"{prefix}wastage_percent")
             casting.wastage_weight = request.POST.get(f"{prefix}wastage_weight")
             casting.service_charges_rate = request.POST.get(f"{prefix}service_rate")
@@ -318,6 +320,7 @@ def update_flask(request, flask_id):
                 prefix = f"casting_{casting.id}_"
                 casting.weight = request.POST.get(f"{prefix}weight")
                 casting.converted24k = request.POST.get(f"{prefix}converted")
+                casting.total_weight24k = request.POST.get(f"{prefix}total")
                 casting.wastage_percentage = request.POST.get(f"{prefix}wastage_percent")
                 casting.wastage_weight = request.POST.get(f"{prefix}wastage_weight")
                 casting.service_charges_rate = request.POST.get(f"{prefix}service_rate")

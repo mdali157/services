@@ -132,7 +132,7 @@
                             <th>Weight</th>
                             <th>Wastage %</th>
                             <th>Wastage Weight</th>
-                            <th>Converted 24K</th>
+                            <th>Total Weight 24K</th>
                             <th>Services Charges Rate</th>
                             <th>Services Charges Amount</th>
                         </tr>
@@ -267,14 +267,15 @@
                 const serviceRate = parseFloat(serviceRateInput.value) || 0;
 
                 const converted24k = (karateValue / 24) * weight;
+                const total24k = (karateValue / 24) * (weight + wastageWeight);
                 const wastageWeight = (weight/96)*wastagePercent;
-                const total24k = converted24k + wastageWeight;
                 const serviceAmount = serviceRate * weight;
                 const cashReceived = serviceAmount;
 
-                row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
-                row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
-                row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
+                row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(3);
+                row.querySelector(`[name$="_total"]`).value = total24k.toFixed(3);
+                row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(3);
+                row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(3);
             }
 
             function bindRowEvents(row) {
@@ -320,7 +321,7 @@
                             <td><input type="number" step="0.001" name="casting_${id}_weight" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_wastage_percent" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_wastage_weight" class="form-control"></td>
-                            <td><input type="number" step="0.001" name="casting_${id}_converted" class="form-control"></td>
+                            <td><input type="number" step="0.001" name="casting_${id}_total" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_service_rate" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_service_amount" class="form-control" ></td>
                         `;
