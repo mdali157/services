@@ -267,8 +267,8 @@
                 const serviceRate = parseFloat(serviceRateInput.value) || 0;
 
                 const converted24k = (karateValue / 24) * weight;
-                const total24k = (karateValue / 24) * (weight + wastageWeight);
                 const wastageWeight = (weight/96)*wastagePercent;
+                const total24k = (karateValue / 24) * (weight + wastageWeight);
                 const serviceAmount = serviceRate * weight;
                 const cashReceived = serviceAmount;
 
