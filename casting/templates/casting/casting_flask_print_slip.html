@@ -60,11 +60,11 @@
         <p><span class="field-label">Wastage:</span> {{ casting.wastage_weight }}</p>
         <p><span class="field-label">Total Weight G24K:</span> {{ casting.total_weight24k }}</p>
         <p><span class="field-label">Received G24K Client:</span> {{ casting.gold_received }}</p>
-        <p><span class="field-label">Balance Short/(Excess):</span> {{ total_gold_balance }}</p>
+        <p><span class="field-label">Balance Short/(Excess):</span> {{ total_gold_balance|floatformat:2  }}</p>
         <p><span class="field-label">Charges Rate:</span> {{ casting.service_charges_rate }}</p>
         <p><span class="field-label">Charges Amount:</span> {{ casting.service_charges_amount }}</p>
         <p><span class="field-label">Amount Received:</span> {{ casting.cash_received }}</p>
-        <p><span class="field-label">Balance Amount:</span> {{ total_balance }}</p>
+        <p><span class="field-label">Balance Amount:</span> {{ total_balance|floatformat:2  }}</p>
     </div>
 
     <div class="center">
