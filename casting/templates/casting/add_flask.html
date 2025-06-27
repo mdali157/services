@@ -272,10 +272,10 @@
                 const serviceAmount = serviceRate * weight;
                 const cashReceived = serviceAmount;
 
-                row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(3);
-                row.querySelector(`[name$="_total"]`).value = total24k.toFixed(3);
-                row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(3);
-                row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(3);
+                row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
+                row.querySelector(`[name$="_total"]`).value = total24k.toFixed(2);
+                row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
+                row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
             }
 
             function bindRowEvents(row) {
@@ -322,6 +322,7 @@
                             <td><input type="number" step="0.001" name="casting_${id}_wastage_percent" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_wastage_weight" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_total" class="form-control"></td>
+                            <td style="display: none"><input type="number" step="0.001" name="casting_${id}_converted" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_service_rate" class="form-control"></td>
                             <td><input type="number" step="0.001" name="casting_${id}_service_amount" class="form-control" ></td>
                         `;

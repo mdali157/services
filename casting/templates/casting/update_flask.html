@@ -259,10 +259,10 @@
         const cashReceived = serviceAmount;
 
         // Update fields in the row
-        row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(3);
-        row.querySelector(`[name$="_total"]`).value = total24k.toFixed(3);
-        row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(3);
-        row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(3);
+        row.querySelector(`[name$="_converted"]`).value = converted24k.toFixed(2);
+        row.querySelector(`[name$="_total"]`).value = total24k.toFixed(2);
+        row.querySelector(`[name$="_wastage_weight"]`).value = wastageWeight.toFixed(2);
+        row.querySelector(`[name$="_service_amount"]`).value = serviceAmount.toFixed(2);
     }
 
     /***** 3. bindRowEvents(row) – listen only on weight/wastage%/service inputs *****/
