@@ -6,7 +6,8 @@ from io import BytesIO
 
 import openpyxl
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db.models import Max, Sum
+from django.db.models import Max, Sum, Min, F
+from django.db.models.functions import TruncDate
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -366,18 +367,17 @@ def report(request):
                 if selected_service_type and selected_service_type != "All":
                     qs = qs.filter(service_type=selected_service_type)
 
-                # Group by date and service type, and sum Estimate and Amount
                 qs = qs.values('created_at', 'service_type') \
                     .annotate(
-                    total_estimate=Sum('estimated_price'),
-                    total_amount=Sum('actual_price')
-                ).order_by('created_at', 'service_type')
+                        total_estimate=Sum('estimated_price'),
+                        total_amount=Sum('actual_price')
+                    ).order_by('created_at', 'service_type')
 
-                # Calculate totals
                 totals = {
                     'grand_total_estimate': sum(item['total_estimate'] for item in qs if item['total_estimate']),
-                    'grand_total_amount': sum(item['total_amount'] for item in qs if item['total_amount'])
+                    'grand_total_amount': sum(item['total_amount'] for item in qs if item['total_amount']),
                 }
+
             else:  # Detail
                 qs = Receiving.objects.filter(created_at__range=(from_date, to_date))
                 if selected_customers:
@@ -387,85 +387,109 @@ def report(request):
 
                 totals = {
                     'grand_total_estimate': sum(item.estimated_price for item in qs if item.estimated_price),
-                    'grand_total_amount': sum(item.actual_price for item in qs if item.actual_price)
+                    'grand_total_amount': sum(item.actual_price for item in qs if item.actual_price),
                 }
 
         else:  # report_for == "Casting"
             if report_type == "Summary":
+                from collections import defaultdict
+                from decimal import Decimal
+                from django.utils.timezone import localtime
+
                 qs = Casting.objects.filter(created_at__range=(from_date, to_date))
                 if selected_customers:
                     qs = qs.filter(customer__id__in=selected_customers)
 
-                # Group by date and sum other fields
-                qs = qs.values('created_at') \
-                    .annotate(
-                    total_input_weight=Sum('flask__input_weight'),
-                    total_output_weight=Sum('flask__output_weight'),
-                    total_machine_wastage=Sum('flask__machine_wastage'),
-                    total_production_weight=Sum('flask__production_weight'),
-                    total_weight24k=Sum('total_weight24k'),
-                    total_wastage_weight=Sum('wastage_weight'),
-                    total_gold_received=Sum('gold_received'),
-                    total_service_charges_amount=Sum('service_charges_amount'),
-                    total_cash_received=Sum('cash_received')
-                ).order_by('created_at')
+                daily_summary = defaultdict(lambda: {
+                    'flask_input': Decimal(0),
+                    'flask_output': Decimal(0),
+                    'flask_wastage': Decimal(0),
+                    'flask_production': Decimal(0),
+                    'total_weight24k': Decimal(0),
+                    'total_wastage_weight': Decimal(0),
+                    'total_gold_received': Decimal(0),
+                    'total_service_charges_amount': Decimal(0),
+                    'total_cash_received': Decimal(0),
+                    'balance_cash': Decimal(0),
+                    'balance_gold': Decimal(0),
+                    'flask_ids': set(),
+                })
 
-                for item in qs:
-                    item["balance_cash"] = float(item.get("total_service_charges_amount") or 0) - float(
-                        item.get("total_cash_received") or 0)
-                    item["balance_gold"] = float(item.get("total_weight24k") or 0) - float(
-                        item.get("total_gold_received") or 0)
+                for obj in qs:
+
+                    if isinstance(obj.flask.created_at, datetime.datetime):
+                        date_key = localtime(obj.flask.created_at).date()
+                    else:
+                        date_key = obj.flask.created_at
+                    flask = obj.flask
+
+                    if flask and flask.id not in daily_summary[date_key]['flask_ids']:
+                        daily_summary[date_key]['flask_input'] += Decimal(flask.input_weight or 0)
+                        daily_summary[date_key]['flask_output'] += Decimal(flask.output_weight or 0)
+                        daily_summary[date_key]['flask_wastage'] += Decimal(flask.machine_wastage or 0)
+                        daily_summary[date_key]['flask_production'] += Decimal(flask.production_weight or 0)
+                        daily_summary[date_key]['flask_ids'].add(flask.id)
+
+                    daily_summary[date_key]['total_weight24k'] += Decimal(obj.total_weight24k or 0)
+                    daily_summary[date_key]['total_wastage_weight'] += Decimal(obj.wastage_weight or 0)
+                    daily_summary[date_key]['total_gold_received'] += Decimal(obj.gold_received or 0)
+                    daily_summary[date_key]['total_service_charges_amount'] += Decimal(obj.service_charges_amount or 0)
+                    daily_summary[date_key]['total_cash_received'] += Decimal(obj.cash_received or 0)
+
+                daily_qs = []
+                for date, data in sorted(daily_summary.items()):
+                    data['balance_cash'] = data['total_service_charges_amount'] - data['total_cash_received']
+                    data['balance_gold'] = data['total_weight24k'] - data['total_gold_received']
+                    data['created_at'] = date
+                    del data['flask_ids']
+                    daily_qs.append(data)
 
                 totals = {
-                    'grand_total_input': sum(
-                        float(item['total_input_weight']) for item in qs if item['total_input_weight']),
-                    'grand_total_output': sum(
-                        float(item['total_output_weight']) for item in qs if item['total_output_weight']),
-                    'grand_total_wastage': sum(
-                        float(item['total_machine_wastage']) for item in qs if item['total_machine_wastage']),
-                    'grand_total_production': sum(
-                        float(item['total_production_weight']) for item in qs if item['total_production_weight']),
-                    'grand_total_24k': sum(float(item['total_weight24k']) for item in qs if item['total_weight24k']),
-                    'grand_total_wastage_weight': sum(
-                        float(item['total_wastage_weight']) for item in qs if item['total_wastage_weight']),
-                    'grand_total_gold': sum(
-                        float(item['total_gold_received']) for item in qs if item['total_gold_received']),
-                    'grand_total_service': sum(float(item['total_service_charges_amount']) for item in qs if
-                                               item['total_service_charges_amount']),
-                    'grand_total_cash': sum(
-                        float(item['total_cash_received']) for item in qs if item['total_cash_received']),
-                    'grand_total_balance_cash': sum(item['balance_cash'] for item in qs),
-                    'grand_total_balance_gold': sum(item['balance_gold'] for item in qs),
-
+                    'grand_total_input': sum(d['flask_input'] for d in daily_qs),
+                    'grand_total_output': sum(d['flask_output'] for d in daily_qs),
+                    'grand_total_wastage': sum(d['flask_wastage'] for d in daily_qs),
+                    'grand_total_production': sum(d['flask_production'] for d in daily_qs),
+                    'grand_total_24k': sum(d['total_weight24k'] for d in daily_qs),
+                    'grand_total_wastage_weight': sum(d['total_wastage_weight'] for d in daily_qs),
+                    'grand_total_gold': sum(d['total_gold_received'] for d in daily_qs),
+                    'grand_total_service': sum(d['total_service_charges_amount'] for d in daily_qs),
+                    'grand_total_cash': sum(d['total_cash_received'] for d in daily_qs),
+                    'grand_total_balance_cash': sum(d['balance_cash'] for d in daily_qs),
+                    'grand_total_balance_gold': sum(d['balance_gold'] for d in daily_qs),
                 }
+
+                qs = daily_qs  # used in PDF/Excel rendering
+
             else:  # Detail
                 qs = Casting.objects.filter(created_at__range=(from_date, to_date))
-
                 if selected_customers:
                     qs = qs.filter(customer__id__in=selected_customers)
 
+                # Compute balance fields for each casting
                 for item in qs:
                     item.balance_gold = (float(item.total_weight24k or 0) - float(item.gold_received or 0))
                     item.balance_cash = (float(item.service_charges_amount or 0) - float(item.cash_received or 0))
 
-                totals = {
-                    'grand_total_input': sum(
-                        float(item.flask.input_weight) for item in qs if item.flask and item.flask.input_weight),
-                    'grand_total_output': sum(
-                        float(item.flask.output_weight) for item in qs if item.flask and item.flask.output_weight),
-                    'grand_total_wastage': sum(
-                        float(item.flask.machine_wastage) for item in qs if item.flask and item.flask.machine_wastage),
-                    'grand_total_production': sum(float(item.flask.production_weight) for item in qs if
-                                                  item.flask and item.flask.production_weight),
-                    'grand_total_24k': sum(float(item.total_weight24k) for item in qs if item.total_weight24k),
-                    'grand_total_wastage_weight': sum(float(item.wastage_weight) for item in qs if item.wastage_weight),
-                    'grand_total_gold': sum(float(item.gold_received) for item in qs if item.gold_received),
-                    'grand_total_service': sum(
-                        float(item.service_charges_amount) for item in qs if item.service_charges_amount),
-                    'grand_total_cash': sum(float(item.cash_received) for item in qs if item.cash_received),
-                    'grand_total_balance_cash': sum(item.balance_cash for item in qs),
-                    'grand_total_balance_gold': sum(item.balance_gold for item in qs)
+                # Use flask.id to avoid counting the same flask more than once
+                flask_map = {}
+                for item in qs:
+                    if item.flask and item.flask.id not in flask_map:
+                        flask_map[item.flask.id] = item.flask
 
+                unique_flasks = flask_map.values()
+
+                totals = {
+                    'grand_total_input': sum(float(f.input_weight or 0) for f in unique_flasks),
+                    'grand_total_output': sum(float(f.output_weight or 0) for f in unique_flasks),
+                    'grand_total_wastage': sum(float(f.machine_wastage or 0) for f in unique_flasks),
+                    'grand_total_production': sum(float(f.production_weight or 0) for f in unique_flasks),
+                    'grand_total_24k': sum(float(item.total_weight24k or 0) for item in qs),
+                    'grand_total_wastage_weight': sum(float(item.wastage_weight or 0) for item in qs),
+                    'grand_total_gold': sum(float(item.gold_received or 0) for item in qs),
+                    'grand_total_service': sum(float(item.service_charges_amount or 0) for item in qs),
+                    'grand_total_cash': sum(float(item.cash_received or 0) for item in qs),
+                    'grand_total_balance_cash': sum(item.balance_cash for item in qs),
+                    'grand_total_balance_gold': sum(item.balance_gold for item in qs),
                 }
 
         # 4) Branch on action
@@ -525,41 +549,24 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
     if report_for == "Services":
         if report_type == "Detail":
             headers = [
-                "Service #",
-                "Date",
-                "Type",
-                "Customer Name",
-                "Mobile #",
-                "Work Description",
-                "Estimate",
-                "Amount",
-                "Remarks",
+                "Service #", "Date", "Type", "Customer Name", "Mobile #", "Work Description",
+                "Estimate", "Amount", "Remarks"
             ]
         else:  # Summary
             headers = ["Date", "Type", "Estimate", "Amount"]
-    else:  # report_for == "Casting"
+    else:  # Casting
         if report_type == "Detail":
             headers = [
                 "Flask #", "Date", "Karate", "Color", "Input WT", "Output WT", "Machine Wastage",
                 "Cast #", "Party Name", "Production Weight", "Weight-24K", "Wastage %",
-                "Wastage Wt", "Total Wt", "Gold Received", "Balance Gold","Service Charges Rate", "Amount",
-                "Received Amount", "Balance Cash", "Remarks"
+                "Wastage Wt", "Total Wt", "Gold Received", "Balance Gold",
+                "Service Charges Rate", "Amount", "Received Amount", "Balance Cash", "Remarks"
             ]
         else:  # Summary
             headers = [
-                "Date",
-                "Input WT",
-                "Output WT",
-                "Machine Wastage",
-                "Production Weight",
-                "Weight-24K",
-                "Wastage Wt",
-                "Total Wt",
-                "Gold Received",
-                "Balance Gold",
-                "Service Amount",
-                "Received Amount",
-                "Balance Cash"
+                "Date", "Input WT", "Output WT", "Machine Wastage", "Production Weight",
+                "Weight-24K", "Wastage Wt", "Total Wt", "Gold Received", "Balance Gold",
+                "Service Amount", "Received Amount", "Balance Cash"
             ]
 
     for col_idx, column_title in enumerate(headers, 1):
@@ -567,7 +574,6 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
         cell.value = column_title
         ws.column_dimensions[get_column_letter(col_idx)].width = max(len(column_title) * 1.2, 15)
 
-    # Write each row
     row_num = 2
     for obj in queryset:
         row = []
@@ -584,14 +590,14 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                     obj.actual_price or "",
                     obj.remarks or "",
                 ]
-            else:  # Summary
+            else:
                 row = [
                     obj["created_at"].strftime("%Y-%m-%d"),
                     obj["service_type"],
                     obj["total_estimate"] or "",
                     obj["total_amount"] or "",
                 ]
-        else:  # report_for == "Casting"
+        else:  # Casting
             if report_type == "Detail":
                 row = [
                     obj.flask.id if obj.flask else "",
@@ -616,29 +622,28 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
                     obj.balance_cash,
                     obj.remarks if obj.remarks else "",
                 ]
-            else:  # Summary
+            else:  # Summary – updated to match daily_qs format
                 row = [
                     obj["created_at"].strftime("%Y-%m-%d"),
-                    obj["total_input_weight"] or "",
-                    obj["total_output_weight"] or "",
-                    obj["total_machine_wastage"] or "",
-                    obj["total_production_weight"] or "",
+                    obj["flask_input"] or "",
+                    obj["flask_output"] or "",
+                    obj["flask_wastage"] or "",
+                    obj["flask_production"] or "",
                     obj["total_weight24k"] or "",
                     obj["total_wastage_weight"] or "",
-                    obj["total_weight24k"] or "",
+                    obj["total_weight24k"] or "",  # Total Wt (same as 24K)
                     obj["total_gold_received"] or "",
                     obj["balance_gold"],
                     obj["total_service_charges_amount"] or "",
                     obj["total_cash_received"] or "",
-                    obj["balance_cash"]
+                    obj["balance_cash"],
                 ]
 
         for col_idx, cell_value in enumerate(row, 1):
             ws.cell(row=row_num, column=col_idx).value = cell_value
-
         row_num += 1
 
-    # Add totals row
+    # Totals row
     row_num += 1
     if report_for == "Services":
         if report_type == "Detail":
@@ -646,7 +651,7 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
             ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=6)
             ws.cell(row=row_num, column=7, value=totals['grand_total_estimate'])
             ws.cell(row=row_num, column=8, value=totals['grand_total_amount'])
-        else:  # Summary
+        else:
             ws.cell(row=row_num, column=1, value="Grand Total:")
             ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=2)
             ws.cell(row=row_num, column=3, value=totals['grand_total_estimate'])
@@ -677,12 +682,12 @@ def generate_excel_response(queryset, report_for, report_type, from_date, to_dat
             ws.cell(row=row_num, column=7, value=totals['grand_total_wastage_weight'])
             ws.cell(row=row_num, column=8, value=totals['grand_total_24k'])
             ws.cell(row=row_num, column=9, value=totals['grand_total_gold'])
-            ws.cell(row=row_num, column=10, value=totals['grand_total_balance_gold'])  # Balance Gold
-            ws.cell(row=row_num, column=11, value=totals['grand_total_service'])  # Service Amount
-            ws.cell(row=row_num, column=12, value=totals['grand_total_cash'])  # Received Amount
+            ws.cell(row=row_num, column=10, value=totals['grand_total_balance_gold'])
+            ws.cell(row=row_num, column=11, value=totals['grand_total_service'])
+            ws.cell(row=row_num, column=12, value=totals['grand_total_cash'])
             ws.cell(row=row_num, column=13, value=totals['grand_total_balance_cash'])
 
-            # Format totals row
+    # Style totals row
     for row in ws.iter_rows(min_row=row_num, max_row=row_num):
         for cell in row:
             cell.font = openpyxl.styles.Font(bold=True)

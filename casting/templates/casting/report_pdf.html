@@ -159,10 +159,10 @@
                     <td>{{ obj.remarks|default_if_none:"-"|truncatechars:20 }}</td>
                 {% else %}
                     <td>{{ obj.created_at|date:"Y-m-d" }}</td>
-                    <td>{{ obj.total_input_weight|default_if_none:"-"|floatformat:3 }}</td>
-                    <td>{{ obj.total_output_weight|default_if_none:"-"|floatformat:3 }}</td>
-                    <td>{{ obj.total_machine_wastage|default_if_none:"-"|floatformat:3 }}</td>
-                    <td>{{ obj.total_production_weight|default_if_none:"-"|floatformat:3 }}</td>
+                    <td>{{ obj.flask_input|floatformat:3 }}</td>
+                    <td>{{ obj.flask_output|floatformat:3 }}</td>
+                    <td>{{ obj.flask_wastage|floatformat:3 }}</td>
+                    <td>{{ obj.flask_production|floatformat:3 }}</td>
                     <td>{{ obj.total_weight24k|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.total_wastage_weight|default_if_none:"-"|floatformat:3 }}</td>
                     <td>{{ obj.total_weight24k|default_if_none:"-"|floatformat:3 }}</td>
